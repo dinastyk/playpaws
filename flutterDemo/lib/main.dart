@@ -110,7 +110,6 @@ class _MyHomePageState extends State<MyHomePage>
         child: Padding
         (
           padding: const EdgeInsets.only(bottom: 20),
-    
           child: Column
           (
             // Column is also a layout widget. It takes a list of children and
@@ -159,12 +158,14 @@ class _MyHomePageState extends State<MyHomePage>
           ),
         ),
       ),
+      /*
       floatingActionButton: FloatingActionButton
       (
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
+      */ // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
