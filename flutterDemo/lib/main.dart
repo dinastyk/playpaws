@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensures async operations can run in main()
   await Firebase.initializeApp(
@@ -135,6 +132,12 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: 
               [
+                ElevatedButton(onPressed: () {print('Button Pressed');},
+                child: Text('Button'),),
+                ElevatedButton(onPressed: () {print('Button Pressed');},
+                child: Text('Button'),),
+                ElevatedButton(onPressed: () {print('Button Pressed');},
+                child: Text('Button'),),
                 ElevatedButton(onPressed: () {print('Button Pressed');},
                 child: Text('Button'),),
               ],
