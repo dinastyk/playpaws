@@ -2,20 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-void main() async {
+void main() async 
+{
   WidgetsFlutterBinding.ensureInitialized(); // Ensures async operations can run in main()
-  await Firebase.initializeApp(
+  await Firebase.initializeApp
+  (
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatelessWidget 
+{
   const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) 
+  {
     return MaterialApp(
       title: 'PlayPaws Demo',
       theme: ThemeData(
@@ -43,7 +47,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends StatefulWidget 
+{
   const MyHomePage({super.key, required this.title});
 
   // This widget is the home page of your application. It is stateful, meaning
@@ -61,7 +66,8 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> 
+{
   int _counter = 0;
 
   void _incrementCounter() {
@@ -100,59 +106,59 @@ class _MyHomePageState extends State<MyHomePage> {
       (
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-
         alignment: Alignment.bottomCenter,
         child: Padding
-        (padding: const EdgeInsets.only(bottom: 20),
-    
-        child: Column
         (
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>
-          [
-            /*
-            const Text
-            (
-              'You have pushed the button this many times:',
-            ),
-            Text
-            (
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            */
-            Row
-            (
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: 
-              [
-                ElevatedButton(onPressed: () {print('Opened Tab 1');},
-                child: Text('Tab 1'),),
-                ElevatedButton(onPressed: () {print('Opened Tab 2');},
-                child: Text('Tab 2'),),
-                ElevatedButton(onPressed: () {print('Opened Tab 3');},
-                child: Text('Tab 3'),),
-                ElevatedButton(onPressed: () {print('Opened Tab 4');},
-                child: Text('Tab 4'),),
-              ],
-            ),
-          ],
+          padding: const EdgeInsets.only(bottom: 20),
+    
+          child: Column
+          (
+            // Column is also a layout widget. It takes a list of children and
+            // arranges them vertically. By default, it sizes itself to fit its
+            // children horizontally, and tries to be as tall as its parent.
+            //
+            // Column has various properties to control how it sizes itself and
+            // how it positions its children. Here we use mainAxisAlignment to
+            // center the children vertically; the main axis here is the vertical
+            // axis because Columns are vertical (the cross axis would be
+            // horizontal).
+            //
+            // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+            // action in the IDE, or press "p" in the console), to see the
+            // wireframe for each widget.
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>
+            [
+              /*
+              const Text
+              (
+                'You have pushed the button this many times:',
+              ),
+              Text
+              (
+                '$_counter',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              */
+              Row
+              (
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: 
+                [
+                  ElevatedButton(onPressed: () {print('Opened Tab 1');},
+                  child: Text('Tab 1'),),
+                  ElevatedButton(onPressed: () {print('Opened Tab 2');},
+                  child: Text('Tab 2'),),
+                  ElevatedButton(onPressed: () {print('Opened Tab 3');},
+                  child: Text('Tab 3'),),
+                  ElevatedButton(onPressed: () {print('Opened Tab 4');},
+                  child: Text('Tab 4'),),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
       floatingActionButton: FloatingActionButton
       (
         onPressed: _incrementCounter,
