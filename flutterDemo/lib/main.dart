@@ -68,16 +68,25 @@ class MyHomePage extends StatefulWidget
 
 class _MyHomePageState extends State<MyHomePage> 
 {
-  int _counter = 0;
+  int _index = 0; // to track the tabs
+  final List<Widget> _tabs =
+  [
+    Center(child: Text("Home Page")),
+    Center(child: Text("Settings Page")),
+    Center(child: Text("Profile Page")),
+    Center(child: Text("More Page")),
+  ];
 
-  void _incrementCounter() {
-    setState(() {
+  void _TapPressed(int index) 
+  {
+    setState(() 
+    {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
+      _index = index;
     });
   }
 
@@ -102,6 +111,20 @@ class _MyHomePageState extends State<MyHomePage>
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
+      body: _tabs[_index],
+      bottomNavigationBar: BottomNavigationBar
+      (
+        currentIndex: _index,
+        onTap: _TapPressed,
+        items:
+        [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Setings"),
+          BottomNavigationBarItem(icon: Icon(Icons.face), label: "Profile"),
+          //BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: "More"),
+        ],
+      )
+      /*
       body: Align
       (
         // Center is a layout widget. It takes a single child and positions it
@@ -157,7 +180,8 @@ class _MyHomePageState extends State<MyHomePage>
             ],
           ),
         ),
-      ),
+        */
+      );
       /*
       floatingActionButton: FloatingActionButton
       (
@@ -166,6 +190,5 @@ class _MyHomePageState extends State<MyHomePage>
         child: const Icon(Icons.add),
       ),
       */ // This trailing comma makes auto-formatting nicer for build methods.
-    );
   }
 }
