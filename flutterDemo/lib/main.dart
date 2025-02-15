@@ -124,6 +124,6 @@ class _MyHomePageState extends State<MyHomePage>
           //BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: "More"),
         ],
       )
-      );
+    );
   }
 }
