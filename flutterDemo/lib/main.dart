@@ -114,6 +114,7 @@ class _MyHomePageState extends State<MyHomePage>
       body: _tabs[_index],
       bottomNavigationBar: BottomNavigationBar
       (
+        type: BottomNavigationBarType.fixed,
         currentIndex: _index,
         onTap: _tapPressed,
         items:
@@ -121,7 +122,7 @@ class _MyHomePageState extends State<MyHomePage>
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Setings"),
           BottomNavigationBarItem(icon: Icon(Icons.face), label: "Profile"),
-          //BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: "More"),
+          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: "More"),
         ],
       )
     );
