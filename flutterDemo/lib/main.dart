@@ -169,7 +169,12 @@ class NavigationBarApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(theme: ThemeData(useMaterial3: true), home: const NavigationExample());
+    // return MaterialApp(theme: ThemeData(useMaterial3: true), home: const NavigationExample());
+    return MaterialApp(theme:ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromARGB(255, 55, 90, 180)),
+        useMaterial3: true,
+      ), home: const NavigationExample());
   }
 }
 
