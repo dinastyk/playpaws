@@ -1,39 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'screens/login_screen.dart';
+import 'screens/navigation_bar.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
+  const MyApp({super.key}); // Add key parameter
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PlayPaws Demo',
       theme: ThemeData(
         // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(
             seedColor: const Color.fromARGB(255, 55, 90, 180)),
-        useMaterial3: true,
+        useMaterial3:
+            true, //permits use of Google Materal3 design system for app tabs
       ),
       // home: const MyHomePage(title: 'PlayPaws Demo Home Page'),
-       home: const NavigationBarApp(),
+      home: LoginScreen(),
     );
   }
 }
@@ -63,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
+      // so that the display can reflect the up dated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
@@ -122,183 +115,6 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
-  }
-}
-
-// class TabBarDemo extends StatelessWidget {
-//   const TabBarDemo({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//             theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(
-//             seedColor: const Color.fromARGB(255, 55, 90, 180)),
-//         useMaterial3: true,
-//       ),
-//       home: DefaultTabController(
-//         length: 3,
-//         child: Scaffold(
-//           appBar: AppBar(
-//             bottom: const TabBar(
-//               tabs: [
-//                 Tab(icon: Icon(Icons.directions_car)),
-//                 Tab(icon: Icon(Icons.directions_transit)),
-//                 Tab(icon: Icon(Icons.directions_bike)),
-//               ],
-//             ),
-//             title: const Text('Tabs Demo'),
-//           ),
-//           body: const TabBarView(
-//             children: [
-//               MyHomePage(title: 'PlayPaws Demo Home Page'),
-//               Icon(Icons.directions_transit),
-//               Icon(Icons.directions_bike),
-//             ],
-//           ),
-          
-//         ),
-//       ),
-//     );
-//   }
-// } //for top tabs
-
-class NavigationBarApp extends StatelessWidget {
-  const NavigationBarApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // return MaterialApp(theme: ThemeData(useMaterial3: true), home: const NavigationExample());
-    return MaterialApp(theme:ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromARGB(255, 55, 90, 180)),
-        useMaterial3: true,
-      ), home: const NavigationExample());
-  }
-}
-
-class NavigationExample extends StatefulWidget {
-  const NavigationExample({super.key});
-
-  @override
-  State<NavigationExample> createState() => _NavigationExampleState();
-}
-
-class _NavigationExampleState extends State<NavigationExample> {
-  int currentPageIndex = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    // final ThemeData theme =  ThemeData(
-    //     colorScheme: ColorScheme.fromSeed(
-    //         seedColor: const Color.fromARGB(255, 55, 90, 180)),
-    //     useMaterial3: true,
-    //   );
-    return Scaffold(
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-        },
-        indicatorColor: Colors.amber,
-        selectedIndex: currentPageIndex,
-        destinations: const <Widget>[
-          NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.notifications_sharp)),
-            label: 'Notifications',
-          ),
-          NavigationDestination(
-            icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
-            label: 'Messages',
-          ),
-        ],
-      ),
-      body:
-          <Widget>[
-            /// Home page
-            // Card(
-            //   shadowColor: Colors.transparent,
-            //   margin: const EdgeInsets.all(8.0),
-            //   child: SizedBox.expand(
-            //     child: Center(child: Text('Home page', style: theme.textTheme.titleLarge)),
-            //   ),
-            // ),
-          MyHomePage(title: "PlayPaws Demo Home Page"),
-            /// Notifications page
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Column(
-                children: <Widget>[
-                  Card(
-                    child: ListTile(
-                      leading: Icon(Icons.notifications_sharp),
-                      title: Text('Notification 1'),
-                      subtitle: Text('This is a notification'),
-                    ),
-                  ),
-                  Card(
-                    child: ListTile(
-                      leading: Icon(Icons.notifications_sharp),
-                      title: Text('Notification 2'),
-                      subtitle: Text('This is a notification'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            /// Messages page
-            ListView.builder(
-              reverse: true,
-              itemCount: 2,
-              itemBuilder: (BuildContext context, int index) {
-                if (index == 0) {
-                  return Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      margin: const EdgeInsets.all(8.0),
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Text(
-                        'Hello',
-                        style: theme.textTheme.bodyLarge!.copyWith(
-                          color: theme.colorScheme.onPrimary,
-                        ),
-                      ),
-                    ),
-                  );
-                }
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.all(8.0),
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      'Hi!',
-                      style: theme.textTheme.bodyLarge!.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ][currentPageIndex],
     );
   }
 }

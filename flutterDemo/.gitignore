@@ -43,3 +43,19 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Build outputs (AUTOMATICALLY GENERATED AS CACHE)
+build/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.podspec
+android/.gradle/
+android/app/build/
+
+# VS Code/IDE settings (PERSONAL)
+.vscode/
+.idea/
+*.iml
+
+# Logs (TEMP FILES)
+*.log
