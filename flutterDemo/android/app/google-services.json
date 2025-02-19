@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "320487633531",
+    "project_id": "playpaws-8b53f",
+    "storage_bucket": "playpaws-8b53f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320487633531:android:9b3601707ced2f9a29e8de",
+        "android_client_info": {
+          "package_name": "com.example.playpaws_test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRlKBPCq77QtczB_tNudNDBAgpIXOC4UQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
