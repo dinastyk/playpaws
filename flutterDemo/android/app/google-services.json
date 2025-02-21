@@ -12,7 +12,12 @@
           "package_name": "com.example.playpaws_test"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "320487633531-k2273onmof21q5j2r91rm4h1vt58smfq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCRlKBPCq77QtczB_tNudNDBAgpIXOC4UQ"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "320487633531-k2273onmof21q5j2r91rm4h1vt58smfq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "320487633531-n3ffnoau7m6j8eprpf88f6vod8srlaf6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.playpawsTest"
+              }
+            }
+          ]
         }
       }
     }
