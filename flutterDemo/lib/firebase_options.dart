@@ -63,6 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '320487633531',
     projectId: 'playpaws-8b53f',
     storageBucket: 'playpaws-8b53f.firebasestorage.app',
+    iosClientId: '320487633531-n3ffnoau7m6j8eprpf88f6vod8srlaf6.apps.googleusercontent.com',
     iosBundleId: 'com.example.playpawsTest',
   );
+
 }
