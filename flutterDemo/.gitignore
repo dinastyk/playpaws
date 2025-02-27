@@ -59,3 +59,12 @@ android/app/build/
 
 # Logs (TEMP FILES)
 *.log
+
+# FVM Version Cache
+.fvm/
+
+# macOS system files
+.DS_Store
+
+# VSCode settings
+.vscode/
