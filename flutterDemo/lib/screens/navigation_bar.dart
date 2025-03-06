@@ -98,6 +98,9 @@ class _NavigationExampleState extends State<NavigationExample> {
             icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
             label: 'Messages',
           ),
+          NavigationDestination(
+            icon: Badge(child: Icon(Icons.settings_sharp)),
+            label: 'Settings'),
         ],
       ),
       body: <Widget>[
@@ -177,6 +180,8 @@ class _NavigationExampleState extends State<NavigationExample> {
             );
           },
         ),
+
+        
       ][currentPageIndex],
     );
   }
