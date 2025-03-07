@@ -185,7 +185,29 @@ class _NavigationExampleState extends State<NavigationExample> {
         (
           children: 
           [
-            
+            ListTile
+            (
+              leading: const Icon(Icons.person),
+              title: const Text("Profile"),
+              subtitle: const Text("Manage your account"),
+              trailing: PopupMenuButton<String>
+              (
+                onSelected: (value) 
+                {
+
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>
+                [
+                  const PopupMenuItem<String>
+                  (
+                    value: 'view',
+                    child: Text('View Profile'),
+                  )
+                ]
+
+              ),
+              //onTap: () {},
+            )
           ]
         ),
 
