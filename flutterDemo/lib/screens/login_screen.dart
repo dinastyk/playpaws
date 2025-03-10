@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'navigation_bar.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key}); //added key param
@@ -13,26 +15,60 @@ class LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final AuthService authService = AuthService();
 
-  @override //Everything below @override deals with UI design, everything above is functionality and app behavior
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Login")),
+      backgroundColor: Color(0xFFD1E4FF),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: "Email"),
+            // LOGO IMAGE
+            Image.asset(
+              'assets/logo.png', // Ensure correct path
+              height: 150, // Adjust size as needed
+              width: 150,
             ),
+            SizedBox(height: 0), // Space between logo and text fields
+
+            Text(
+              "Welcome to PlayPaws!",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunitoSans(
+                fontWeight: FontWeight.bold,
+                fontSize: 28,
+                color: Color(0xFF1A69C6),
+              ),
+            ),
+            SizedBox(height:40),
+
+            TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                    labelText: "Email",
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Color(0xFF1A69C6), width: 1.0))
+                  ),
+              ),
             TextField(
               controller: passwordController,
-              decoration: InputDecoration(labelText: "Password"),
+              decoration: InputDecoration(
+                labelText: "Password",
+                enabledBorder: UnderlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Color(0xFF1A69C6), width: 1.0))
+              ),
               obscureText: true,
             ),
             SizedBox(height: 20),
             ElevatedButton(
+              style:ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFFF9874), // 🔹 Button background color
+                foregroundColor: Colors.white, // 🔹 Text color
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24), // Optional: Padding
+              ),
               onPressed: () async {
                 String email = emailController.text;
                 String password = passwordController.text;
@@ -64,6 +100,11 @@ class LoginScreenState extends State<LoginScreen> {
             ),
             SizedBox(height: 10),
             ElevatedButton(
+              style:ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFFF9874), // 🔹 Button background color
+                foregroundColor: Colors.white, // 🔹 Text color
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24), // Optional: Padding
+              ),
               onPressed: () async {
                 var user = await authService.signInWithGoogle();
                 if (user != null) {
