@@ -179,17 +179,18 @@ class _NavigationExampleState extends State<NavigationExample> {
 
 class MessagesPage extends StatefulWidget
 {
+  const MessagesPage({super.key});
+
   @override
-  _MessagesPageState createState() => _MessagesPageState();
+  MessagesPageState createState() => MessagesPageState();
 }
 
-class _MessagesPageState extends State<MessagesPage>
+class MessagesPageState extends State<MessagesPage>
 {
-  @override
   final TextEditingController _messageController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? user = FirebaseAuth.instance.currentUser;
-  final List<String> _messages = [];
+  //final List<String> _messages = [];
 
   @override
   void dispose()
