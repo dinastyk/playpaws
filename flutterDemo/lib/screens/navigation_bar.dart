@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
@@ -138,49 +140,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         ),
 
         /// Messages page
-        ListView.builder(
-          reverse: true,
-          itemCount: 2,
-          itemBuilder: (BuildContext context, int index) {
-            if (index == 0) {
-              return Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  margin: const EdgeInsets.all(8.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Text(
-                    'Hello',
-                    style: theme.textTheme.bodyLarge!.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
-              );
-            }
-            return Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                margin: const EdgeInsets.all(8.0),
-                padding: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: Text(
-                  'Hi!',
-                  style: theme.textTheme.bodyLarge!.copyWith(
-                    color: theme.colorScheme.onPrimary,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-
+        MessagesPage(),
         ListView
         (
           children: 
@@ -216,3 +176,130 @@ class _NavigationExampleState extends State<NavigationExample> {
     );
   }
 }
+
+class MessagesPage extends StatefulWidget
+{
+  @override
+  _MessagesPageState createState() => _MessagesPageState();
+}
+
+class _MessagesPageState extends State<MessagesPage>
+{
+  @override
+  final TextEditingController _messageController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final User? user = FirebaseAuth.instance.currentUser;
+  final List<String> _messages = [];
+
+  @override
+  void dispose()
+  {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  void sendMessage() async
+  {
+    if (_messageController.text.isNotEmpty)
+    {
+      await _firestore.collection('chats').doc('chat1').collection('messages').add 
+      ({
+        'text': _messageController.text,
+        'senderID': user?.uid,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      _messageController.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context)
+  {
+    return Column
+    (
+      children: 
+      [
+        Expanded
+        (
+          child: StreamBuilder
+          (
+            stream: _firestore
+            .collection('chats')
+            .doc('chat1')
+            .collection('messages')
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
+            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot)
+            {
+              if (!snapshot.hasData)
+              {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final messages = snapshot.data!.docs;
+              return ListView.builder
+              (
+                reverse: true,
+                itemCount: messages.length,
+                itemBuilder: (context, index)
+                {
+                  final message = messages[index]['text'];
+                  final myMessage = messages[index]['senderID'] == user?.uid;
+                  return Align
+                  (
+                    alignment: myMessage ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container
+                    (
+                      margin: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration
+                      (
+                        color: myMessage ? Theme.of(context).colorScheme.primary : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Text
+                      (
+                        message, 
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith
+                        (
+                          color: myMessage ? Theme.of(context).colorScheme.onPrimary : Colors.black,
+                        )
+                      )
+                    )
+                  );
+                }
+              );
+            },
+          ),
+        ),
+        Padding
+        (
+          padding: const EdgeInsets.all(8.0),
+          child: Row
+          (
+            children: 
+            [
+              Expanded
+              (
+                child: TextField
+                (
+                  controller: _messageController,
+                  decoration: const InputDecoration
+                  (
+                    hintText: 'Type a message ...',
+                  ),
+                )
+              ),
+              IconButton
+              (
+                icon: const Icon(Icons.send),
+                onPressed: sendMessage,
+              )
+            ]
+          )
+        )
+      ]
+    );
+  }
+}
+
+
