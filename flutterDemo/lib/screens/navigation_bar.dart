@@ -140,7 +140,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         ),
 
         /// Messages page
-        MessagesPage(receiverID: "RandomID"),
+        MessagesPage(receiverID: ''),
         ListView
         (
           children: 
@@ -252,6 +252,7 @@ class MessagesPageState extends State<MessagesPage>
     chatID = user!.uid.hashCode <= receiverID.hashCode 
     ? "${user!.uid}_$receiverID"
     : "${receiverID}_${user!.uid}";
+    //print('ChatID: $chatID');   // testing if chat is working properly
   }
 
   @override
@@ -266,7 +267,7 @@ class MessagesPageState extends State<MessagesPage>
 
     if (user == null)
     {
-      print("User not authenticated!");
+      print('User not authenticated!');
       return;
     }
     if (_messageController.text.isNotEmpty)
