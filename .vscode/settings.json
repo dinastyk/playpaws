@@ -1,3 +1,7 @@
 {
+<<<<<<< Updated upstream
     "dart.flutterSdkPath": "/opt/homebrew/Caskroom/flutter/3.29.0/flutter"
+=======
+    "cmake.sourceDirectory": "/Users/dinasty/Documents/GitHub/playpaws/flutterDemo/linux"
+>>>>>>> Stashed changes
 }
