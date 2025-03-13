@@ -140,7 +140,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         ),
 
         /// Messages page
-        MessagesPage(receiverID: ''),
+        MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
         ListView
         (
           children: 
@@ -213,7 +213,7 @@ class UserListScreen extends StatelessWidget
                     context,
                     MaterialPageRoute
                     (
-                      builder: (context) => MessagesPage(receiverID: user.id),
+                      builder: (context) => MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
                     )
                   );
                 }
@@ -228,8 +228,9 @@ class UserListScreen extends StatelessWidget
 
 class MessagesPage extends StatefulWidget
 {
-  final String receiverID;
-  const MessagesPage({super.key, required this.receiverID});
+  final String receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
+  //const MessagesPage({super.key});
+  const MessagesPage({super.key, required receiverID});
 
   @override
   MessagesPageState createState() => MessagesPageState();
@@ -240,7 +241,7 @@ class MessagesPageState extends State<MessagesPage>
   final TextEditingController _messageController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? user = FirebaseAuth.instance.currentUser;
-  late String receiverID;
+  String receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
   String ? chatID;
   //final List<String> _messages = [];
 
@@ -248,11 +249,14 @@ class MessagesPageState extends State<MessagesPage>
   void initState()
   {
     super.initState();
-    receiverID = widget.receiverID;
-    chatID = user!.uid.hashCode <= receiverID.hashCode 
+    //receiverID = widget.receiverID;
+    //receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
+    chatID = user!.uid.hashCode != receiverID.hashCode 
     ? "${user!.uid}_$receiverID"
     : "${receiverID}_${user!.uid}";
-    //print('ChatID: $chatID');   // testing if chat is working properly
+    print('ChatID: $chatID');   // testing if chat is working properly
+    //print('UserID: $user');
+    print('ReceiverID: $receiverID');
   }
 
   @override
@@ -264,7 +268,6 @@ class MessagesPageState extends State<MessagesPage>
 
   void sendMessage() async
   {
-
     if (user == null)
     {
       print('User not authenticated!');
@@ -272,11 +275,11 @@ class MessagesPageState extends State<MessagesPage>
     }
     if (_messageController.text.isNotEmpty)
     {
-      await _firestore.collection('chats').doc('chat1').collection('messages').add 
+      await _firestore.collection('chats').doc(chatID).collection('messages').add 
       ({
-        'text': _messageController.text,
-        'senderID': user?.uid,
         'receiverID': receiverID,
+        'senderID': user?.uid,
+        'text': _messageController.text,
         'timestamp': FieldValue.serverTimestamp(),
       });
       _messageController.clear();
@@ -309,7 +312,7 @@ class MessagesPageState extends State<MessagesPage>
               }
               if(snapshot.hasError)
               {
-                return const Center(child: Text("Error Loading Messages!"));
+                return Center(child: Text("Error: ${snapshot.error}"));
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
               {
