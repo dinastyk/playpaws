@@ -140,7 +140,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         ),
 
         /// Messages page
-        MessagesPage(),
+        MessagesPage(receiverID: "RandomID"),
         ListView
         (
           children: 
@@ -177,9 +177,59 @@ class _NavigationExampleState extends State<NavigationExample> {
   }
 }
 
+//userlist
+class UserListScreen extends StatelessWidget
+{
+  @override
+  Widget build(BuildContext context)
+  {
+    return Scaffold
+    (
+      appBar: AppBar(title: Text("Select Uesr to Chat")),
+      body: StreamBuilder
+      (
+        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot)
+        {
+          if (!snapshot.hasData)
+          {
+            return Center(child: Text("No Available Users!"));
+          }
+          final users = snapshot.data!.docs;
+          return ListView.builder
+          (
+            itemCount: users.length,
+            itemBuilder: (context, index)
+            {
+              final user = users[index];
+              return ListTile
+              (
+                title: Text(user['name']),
+                subtitle: Text(user['email']),
+                onTap: ()
+                {
+                  Navigator.push
+                  (
+                    context,
+                    MaterialPageRoute
+                    (
+                      builder: (context) => MessagesPage(receiverID: user.id),
+                    )
+                  );
+                }
+              );
+            }
+          );
+        }
+      )
+    );
+  }
+}
+
 class MessagesPage extends StatefulWidget
 {
-  const MessagesPage({super.key});
+  final String receiverID;
+  const MessagesPage({super.key, required this.receiverID});
 
   @override
   MessagesPageState createState() => MessagesPageState();
@@ -190,7 +240,19 @@ class MessagesPageState extends State<MessagesPage>
   final TextEditingController _messageController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? user = FirebaseAuth.instance.currentUser;
+  late String receiverID;
+  String ? chatID;
   //final List<String> _messages = [];
+
+  @override 
+  void initState()
+  {
+    super.initState();
+    receiverID = widget.receiverID;
+    chatID = user!.uid.hashCode <= receiverID.hashCode 
+    ? "${user!.uid}_$receiverID"
+    : "${receiverID}_${user!.uid}";
+  }
 
   @override
   void dispose()
@@ -201,12 +263,19 @@ class MessagesPageState extends State<MessagesPage>
 
   void sendMessage() async
   {
+
+    if (user == null)
+    {
+      print("User not authenticated!");
+      return;
+    }
     if (_messageController.text.isNotEmpty)
     {
       await _firestore.collection('chats').doc('chat1').collection('messages').add 
       ({
         'text': _messageController.text,
         'senderID': user?.uid,
+        'receiverID': receiverID,
         'timestamp': FieldValue.serverTimestamp(),
       });
       _messageController.clear();
@@ -224,17 +293,26 @@ class MessagesPageState extends State<MessagesPage>
         (
           child: StreamBuilder
           (
-            stream: _firestore
+            stream: chatID != null ? _firestore
             .collection('chats')
-            .doc('chat1')
+            .doc(chatID)
             .collection('messages')
             .orderBy('timestamp', descending: true)
-            .snapshots(),
+            .snapshots()
+            : null,
             builder: (context, AsyncSnapshot<QuerySnapshot> snapshot)
             {
-              if (!snapshot.hasData)
+              if (chatID == null)
               {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: Text("Unable to load messages. User not authenticated."));
+              }
+              if(snapshot.hasError)
+              {
+                return const Center(child: Text("Error Loading Messages!"));
+              }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+              {
+                return const Center(child: Text("No Messages Yet!"));
               }
               final messages = snapshot.data!.docs;
               return ListView.builder
