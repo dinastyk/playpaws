@@ -158,6 +158,14 @@ class _NavigationExampleState extends State<NavigationExample> {
               (
                 onSelected: (value) 
                 {
+                  if (value == 'view')
+                  {
+                    //go to profile
+                  }
+                  else if (value == 'edit')
+                  {
+                    //go to edit profile
+                  }
 
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>
@@ -166,6 +174,11 @@ class _NavigationExampleState extends State<NavigationExample> {
                   (
                     value: 'view',
                     child: Text('View Profile'),
+                  ),
+                  const PopupMenuItem<String>
+                  (
+                    value: 'edit',
+                    child: Text('Edit Profile'),
                   )
                 ]
 
