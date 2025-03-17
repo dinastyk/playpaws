@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
 import '../main.dart';
+import 'SwipeCard.dart';
+import 'CardSwipe.dart';
 
 // class TabBarDemo extends StatelessWidget {
 //   const TabBarDemo({super.key});
@@ -114,7 +116,9 @@ class _NavigationExampleState extends State<NavigationExample> {
         //     child: Center(child: Text('Home page', style: theme.textTheme.titleLarge)),
         //   ),
         // ),
-        MyHomePage(title: "PlayPaws Demo Home Page"),
+        // MyHomePage(title: "PlayPaws Demo Home Page"),
+        SwipeCardsDemo(),
+        // CardSwipe(),
 
         /// Notifications page
         const Padding(
