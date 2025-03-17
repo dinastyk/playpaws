@@ -1,4 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:playpaws_test/services/data_service.dart';
+
+
 class DebugScreen extends StatelessWidget {
+  const DebugScreen({super.key}); // ✅ More concise
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -11,7 +17,9 @@ class DebugScreen extends StatelessWidget {
             testDataService.createDogs();
             testDataService.createPlaydates();
             testDataService.createMatches();
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Test data created successfully!')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Test data created successfully!')),
+            );
           },
           child: Text('Generate Test Data'),
         ),
@@ -19,3 +27,4 @@ class DebugScreen extends StatelessWidget {
     );
   }
 }
+
