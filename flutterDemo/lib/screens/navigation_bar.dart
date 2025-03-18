@@ -116,7 +116,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         //     child: Center(child: Text('Home page', style: theme.textTheme.titleLarge)),
         //   ),
         // ),
-        // MyHomePage(title: "PlayPaws Demo Home Page"),
+        MyHomePage(title: "PlayPaws Demo Home Page"),
         SwipeCardsDemo(),
         // CardSwipe(),
 
