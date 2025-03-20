@@ -47,7 +47,7 @@ class _NavigationExampleState extends State<NavigationExample>
     const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
     const SettingsPage(),
 
-  ]
+  ];
 
   @override
   Widget build(BuildContext context) 
@@ -60,7 +60,7 @@ class _NavigationExampleState extends State<NavigationExample>
     //   );
     return Scaffold
     (
-      body: pages[currentPageIndex];
+      body: pages[currentPageIndex],
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
           setState(() {
