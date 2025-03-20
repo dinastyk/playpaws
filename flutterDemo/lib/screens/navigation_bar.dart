@@ -46,7 +46,6 @@ class _NavigationExampleState extends State<NavigationExample>
     const NotificationsPage(),
     const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
     const SettingsPage(),
-
   ];
 
   @override
