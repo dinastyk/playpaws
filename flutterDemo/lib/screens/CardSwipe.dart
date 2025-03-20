@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import "dog_cards.dart";
 class CardSwipe extends StatefulWidget {
@@ -26,3 +27,4 @@ class _CardSwipeState extends State<CardSwipe> {
     );
   }
 }
+*/

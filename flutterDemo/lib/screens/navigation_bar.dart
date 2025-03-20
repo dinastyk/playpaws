@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,99 @@ import '../firebase_options.dart';
 import '../main.dart';
 import 'SwipeCard.dart';
 import 'CardSwipe.dart';
+import 'settings_page.dart';
+import 'notifications_page.dart';
+import 'messages_page.dart';
+import 'login_screen.dart';
+import 'home_page.dart';
 
+class NavigationBarApp extends StatelessWidget {
+  const NavigationBarApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // return MaterialApp(theme: ThemeData(useMaterial3: true), home: const NavigationExample());
+    return MaterialApp(
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color.fromARGB(255, 55, 90, 180)),
+          useMaterial3: true,
+        ),
+        home: const NavigationExample());
+  }
+}
+
+class NavigationExample extends StatefulWidget {
+  const NavigationExample({super.key});
+
+  @override
+  State<NavigationExample> createState() => _NavigationExampleState();
+}
+
+class _NavigationExampleState extends State<NavigationExample> 
+{
+  int currentPageIndex = 0;
+
+  final List<Widget> pages = 
+  [
+    const HomePage(),
+    const NotificationsPage(),
+    const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
+    const SettingsPage(),
+
+  ]
+
+  @override
+  Widget build(BuildContext context) 
+  {
+    final ThemeData theme = Theme.of(context);
+    // final ThemeData theme =  ThemeData(
+    //     colorScheme: ColorScheme.fromSeed(
+    //         seedColor: const Color.fromARGB(255, 55, 90, 180)),
+    //     useMaterial3: true,
+    //   );
+    return Scaffold
+    (
+      body: pages[currentPageIndex];
+      bottomNavigationBar: NavigationBar(
+        onDestinationSelected: (int index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+        },
+        indicatorColor: Colors.amber,
+        selectedIndex: currentPageIndex,
+        destinations: const <Widget>
+        [
+          NavigationDestination
+          (
+            selectedIcon: Icon(Icons.home),
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          NavigationDestination
+          (
+            icon: Badge(child: Icon(Icons.notifications_sharp)),
+            label: 'Notifications',
+          ),
+          NavigationDestination
+          (
+            icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
+            label: 'Messages',
+          ),
+          NavigationDestination
+          (
+            icon: Badge(child: Icon(Icons.settings_sharp)),
+            label: 'Settings'
+          ),
+        ],
+      ),
+    ); 
+  }
+}
+
+
+/*
 // class TabBarDemo extends StatelessWidget {
 //   const TabBarDemo({super.key});
 
@@ -94,20 +187,24 @@ class _NavigationExampleState extends State<NavigationExample> {
             icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
-          NavigationDestination(
+          NavigationDestination
+          (
             icon: Badge(child: Icon(Icons.notifications_sharp)),
             label: 'Notifications',
           ),
-          NavigationDestination(
+          NavigationDestination
+          (
             icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
             label: 'Messages',
           ),
-          NavigationDestination(
+          NavigationDestination
+          (
             icon: Badge(child: Icon(Icons.settings_sharp)),
             label: 'Settings'),
         ],
       ),
-      body: <Widget>[
+      body: <Widget>
+      [
         /// Home page
         // Card(
         //   shadowColor: Colors.transparent,
@@ -116,7 +213,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         //     child: Center(child: Text('Home page', style: theme.textTheme.titleLarge)),
         //   ),
         // ),
-        MyHomePage(title: "PlayPaws Demo Home Page"),
+        //MyHomePage(title: "PlayPaws Demo Home Page"),
         SwipeCardsDemo(),
         // CardSwipe(),
 
@@ -189,7 +286,8 @@ class _NavigationExampleState extends State<NavigationExample> {
         ),
 
 
-      ][currentPageIndex],
+      ]
+      [currentPageIndex],
     );
   }
 }
@@ -401,5 +499,6 @@ class MessagesPageState extends State<MessagesPage>
     );
   }
 }
+*/
 
 
