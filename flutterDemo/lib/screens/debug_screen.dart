@@ -11,7 +11,8 @@ class DebugScreen extends StatelessWidget {
       appBar: AppBar(title: Text('Debug/Testing Screen')),
       body: Center(
         child: ElevatedButton(
-          onPressed: () {
+          onPressed: () 
+          {
             final testDataService = TestDataService();
             testDataService.createUsers();
             testDataService.createDogs();
