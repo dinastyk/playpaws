@@ -6,6 +6,7 @@ import '../firebase_options.dart';
 import '../main.dart';
 import 'SwipeCard.dart';
 import 'CardSwipe.dart';
+import 'debug_screen.dart';
 
 // class TabBarDemo extends StatelessWidget {
 //   const TabBarDemo({super.key});
@@ -105,8 +106,12 @@ class _NavigationExampleState extends State<NavigationExample> {
           NavigationDestination(
             icon: Badge(child: Icon(Icons.settings_sharp)),
             label: 'Settings'),
+            NavigationDestination(
+            icon: Badge(child: Icon(Icons.settings_ethernet_outlined)),
+            label: 'Debug'),
         ],
       ),
+      
       body: <Widget>[
         /// Home page
         // Card(
@@ -119,7 +124,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         // MyHomePage(title: "PlayPaws Demo Home Page"),
         SwipeCardsDemo(),
         // CardSwipe(),
-
+          
         /// Notifications page
         const Padding(
           padding: EdgeInsets.all(8.0),
@@ -142,7 +147,8 @@ class _NavigationExampleState extends State<NavigationExample> {
             ],
           ),
         ),
-
+        
+      
         /// Messages page
         MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
         ListView
