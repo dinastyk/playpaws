@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:playpaws_test/screens/debug_screen.dart';
 import '../firebase_options.dart';
 import '../main.dart';
 import 'SwipeCard.dart';
@@ -46,6 +47,7 @@ class _NavigationExampleState extends State<NavigationExample>
     const NotificationsPage(),
     const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
     const SettingsPage(),
+    const DebugScreen(),
   ];
 
   @override
@@ -90,6 +92,9 @@ class _NavigationExampleState extends State<NavigationExample>
           (
             icon: Badge(child: Icon(Icons.settings_sharp)),
             label: 'Settings'
+          ), NavigationDestination(
+            icon: Icon(Icons.bug_report), // Icon for debug screen
+            label: 'Debug',
           ),
         ],
       ),

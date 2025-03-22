@@ -58,26 +58,31 @@ class TestDataService {
     }
   }
 
-  // Create Playdates
-  Future<void> createPlaydates() async {
-    for (int i = 1; i <= 30; i++) {
-      String playdateID = 'playdate$i';
-      String dogID1 = 'dog${_random.nextInt(30) + 1}';
-      String dogID2 = 'dog${_random.nextInt(30) + 1}';
+ // Create Playdates
+Future<void> createPlaydates() async {
+  for (int i = 1; i <= 30; i++) {
+    String playdateID = 'playdate$i';
+    String dogID1 = 'dog${_random.nextInt(30) + 1}';
+    String dogID2 = 'dog${_random.nextInt(30) + 1}';
 
-      // Ensuring that dog1 and dog2 are not the same
-      while (dogID1 == dogID2) {
-        dogID2 = 'dog${_random.nextInt(30) + 1}';
-      }
-
-      await _db.collection('playdates').doc(playdateID).set({
-        'dog1ID': dogID1,
-        'dog2ID': dogID2,
-        'scheduledDate': Timestamp.fromDate(DateTime.now().add(Duration(days: _random.nextInt(30)))),
-        'status': 'Pending', // Status of the playdate
-      });
+    // Ensuring that dog1 and dog2 are not the same
+    while (dogID1 == dogID2) {
+      dogID2 = 'dog${_random.nextInt(30) + 1}';
     }
+
+    // Scheduling the playdate
+    DateTime scheduledDate = DateTime.now().add(Duration(days: _random.nextInt(30) + 1)); // Playdate scheduled in the next 30 days
+    
+    await _db.collection('playdates').doc(playdateID).set({
+      'dog1ID': dogID1,
+      'dog2ID': dogID2,
+      'scheduledDate': Timestamp.fromDate(scheduledDate),  // Scheduled date
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
+}
+
 
   // Create Matches (Similar to Playdates but with confirmed interactions)
   Future<void> createMatches() async {
