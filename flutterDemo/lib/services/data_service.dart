@@ -1,115 +1,123 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:faker/faker.dart';
 import 'dart:math';
 
 class TestDataService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final Random _random = Random();
+  final faker = Faker();
 
-  // Helper function to generate random names
-  String generateRandomName() {
-    List<String> names = ['Luna', 'Max', 'Bella', 'Charlie', 'Lucy', 'Rocky', 'Milo', 'Daisy', 'Cooper', 'Buddy'];
-    return names[_random.nextInt(names.length)];
-  }
-
-  // Create 30 Users
+  // Create users method
   Future<void> createUsers() async {
+    Random random = Random();
+
     for (int i = 1; i <= 30; i++) {
       String userID = 'userID$i';
-      String userName = generateRandomName();
+      String userName = faker.person.name();
       String userEmail = 'user$userID@example.com';
-      
-      await _db.collection('users').doc(userID).set({
-        'name': userName,
-        'email': userEmail,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-  }
+      GeoPoint userLocation = GeoPoint(
+  faker.randomGenerator.integer(180) - 90.0, // Latitude between -90 and 90
+  faker.randomGenerator.integer(360) - 180.0, // Longitude between -180 and 180
+);
+      String userPhone = faker.phoneNumber.us();
 
-  // Create 30 Dogs for the Users
-  Future<void> createDogs() async {
-    for (int i = 1; i <= 30; i++) {
-      String dogID = 'dog$i';
-      String name = generateRandomName();
-      String breed = ['Pomeranian', 'Golden Retriever', 'Bulldog', 'Beagle', 'Poodle', 'Labrador', 'Chihuahua', 'Yorkie', 'Shih Tzu', 'Dachshund'][_random.nextInt(10)];
-      String size = ['Small', 'Medium', 'Large'][_random.nextInt(3)];
-      String temperament = ['Happy', 'Friendly', 'Energetic', 'Calm', 'Playful'][_random.nextInt(5)];
-      String ownerID = 'userID${_random.nextInt(30) + 1}'; // Randomly assigning owners
-      
-      // Random geo location
-      GeoPoint location = GeoPoint(43.0 + _random.nextDouble(), 74.0 + _random.nextDouble());
-      
-      // Add dog to Firestore
-      await _db.collection('dogs').doc(dogID).set({
-        'name': name,
-        'breed': breed,
-        'size': size,
-        'personality': [temperament],
-        'ownerID': ownerID,
-        'availableForPlaydates': true,
-        'location': location,
+      // Create user document
+      await _db.collection('users').doc(userID).set({
+        'email': userEmail,
+        'location': userLocation,
+        'name': userName,
+        'phone': userPhone,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-        'age': _random.nextInt(12), // Age between 0 and 11 years
-        'energyLevel': ['Low', 'Medium', 'High'][_random.nextInt(3)],
-        'medicalConditions': 'None',
-        'weight': _random.nextDouble() * 10 + 5, // Weight between 5 and 15 kg
       });
     }
   }
 
- // Create Playdates
-Future<void> createPlaydates() async {
-  for (int i = 1; i <= 30; i++) {
-    String playdateID = 'playdate$i';
-    String dogID1 = 'dog${_random.nextInt(30) + 1}';
-    String dogID2 = 'dog${_random.nextInt(30) + 1}';
+  // Create dogs method
+  Future<void> createDogs() async {
+    Random random = Random();
 
-    // Ensuring that dog1 and dog2 are not the same
-    while (dogID1 == dogID2) {
-      dogID2 = 'dog${_random.nextInt(30) + 1}';
-    }
-
-    // Scheduling the playdate
-    DateTime scheduledDate = DateTime.now().add(Duration(days: _random.nextInt(30) + 1)); // Playdate scheduled in the next 30 days
-    
-    await _db.collection('playdates').doc(playdateID).set({
-      'dog1ID': dogID1,
-      'dog2ID': dogID2,
-      'scheduledDate': Timestamp.fromDate(scheduledDate),  // Scheduled date
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-}
-
-
-  // Create Matches (Similar to Playdates but with confirmed interactions)
-  Future<void> createMatches() async {
     for (int i = 1; i <= 30; i++) {
-      String matchID = 'match$i';
-      String dogID1 = 'dog${_random.nextInt(30) + 1}';
-      String dogID2 = 'dog${_random.nextInt(30) + 1}';
+      String dogID = 'dogID$i';
+      String dogName = faker.animal.name();
+      List<String> dogPersonality = [faker.randomGenerator.boolean() ? "Energetic" : "Friendly"];
+      String dogBreed = faker.randomGenerator.element(['Pomeranian', 'Bulldog', 'Golden Retriever']);
+      String dogSize = faker.randomGenerator.element(['small', 'medium', 'large']);
+      double dogWeight = faker.randomGenerator.decimal();
+      GeoPoint dogLocation = GeoPoint(
+  faker.randomGenerator.integer(180) - 90.0, // Latitude between -90 and 90
+  faker.randomGenerator.integer(360) - 180.0, // Longitude between -180 and 180
+);
+      String dogMedicalCondition = faker.randomGenerator.boolean() ? "None" : "Allergic";
+      bool dogAvailableForPlaydates = faker.randomGenerator.boolean();
 
-      // Ensuring that dog1 and dog2 are not the same
-      while (dogID1 == dogID2) {
-        dogID2 = 'dog${_random.nextInt(30) + 1}';
-      }
-
-      await _db.collection('matches').doc(matchID).set({
-        'dog1ID': dogID1,
-        'dog2ID': dogID2,
-        'matchDate': Timestamp.fromDate(DateTime.now().add(Duration(days: _random.nextInt(30)))),
-        'status': 'Matched', // Status of the match
+      // Create dog document
+      await _db.collection('dogs').doc(dogID).set({
+        'name': dogName,
+        'personality': dogPersonality,
+        'age': faker.randomGenerator.integer(10, min: 1),
+        'availableForPlaydates': dogAvailableForPlaydates,
+        'breed': dogBreed,
+        'energyLevel': faker.randomGenerator.element(['High', 'Medium', 'Low']),
+        'location': dogLocation,
+        'medicalConditions': dogMedicalCondition,
+        'ownerId': _db.collection('users').doc('userID$i'),
+        'size': dogSize,
+        'weight': dogWeight,
       });
     }
   }
 
-  // Call all the methods to create users, dogs, playdates, and matches
-  Future<void> generateTestData() async {
-    await createUsers();
-    await createDogs();
-    await createPlaydates();
-    await createMatches();
+  // Create playdates method
+  Future<void> createPlaydates() async {
+    Random random = Random();
+
+    for (int i = 1; i <= 10; i++) {
+      String playdateID = 'playdateID$i';
+      GeoPoint playdateLocation = GeoPoint(
+  faker.randomGenerator.integer(180) - 90.0, // Latitude between -90 and 90
+  faker.randomGenerator.integer(360) - 180.0, // Longitude between -180 and 180
+);
+
+      DateTime playdateDate = DateTime.now().add(Duration(days: random.nextInt(30)));
+
+      // Create playdate document
+      await _db.collection('playpaws').doc('playdates').collection('playdates').doc(playdateID).set({
+        'date': playdateDate,
+        'location': playdateLocation,
+        'dogIDs': [
+          _db.collection('dogs').doc('dogID${random.nextInt(30) + 1}'),
+          _db.collection('dogs').doc('dogID${random.nextInt(30) + 1}'),
+        ],
+        'confirmedDogOwners': [
+          _db.collection('users').doc('userID${random.nextInt(30) + 1}'),
+          _db.collection('users').doc('userID${random.nextInt(30) + 1}')
+        ],
+        'status': ['Pending'],
+      });
+    }
+  }
+
+  // Create matches method
+  Future<void> createMatches() async {
+    Random random = Random();
+
+    for (int i = 1; i <= 10; i++) {
+      String matchID = 'matchID$i';
+      String dog1ID = 'dogID${random.nextInt(30) + 1}';
+      String dog2ID = 'dogID${random.nextInt(30) + 1}';
+      String playdateID = 'playdateID${random.nextInt(10) + 1}';
+
+      // Create match document
+      await _db.collection('playpaws').doc('playdate_matches').collection('matches').doc(matchID).set({
+        'createdOn': FieldValue.serverTimestamp(),
+        'dog1': dog1ID,
+        'dog2': dog2ID,
+        'playdateID': _db.collection('playpaws').doc('playdates').collection('playdates').doc(playdateID),
+        'status': ['Matched'],
+        'user1': _db.collection('users').doc('userID${random.nextInt(30) + 1}'),
+        'user2': _db.collection('users').doc('userID${random.nextInt(30) + 1}'),
+      });
+    }
   }
 }
+
