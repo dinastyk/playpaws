@@ -40,6 +40,7 @@ dependencies:
   google_sign_in: ^6.2.2
   logger: ^2.5.0
   flutter_swipable: 
+  faker: ^2.1.0
 
 dev_dependencies:
   flutter_test:
