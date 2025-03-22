@@ -10,7 +10,7 @@ class TestDataService {
   Future<void> createUsers() async {
     Random random = Random();
 
-    for (int i = 1; i <= 30; i++) {
+    for (int i = 1; i <= 100; i++) {
       String userID = 'userID$i';
       String userName = faker.person.name();
       String userEmail = 'user$userID@example.com';
@@ -36,7 +36,7 @@ class TestDataService {
   Future<void> createDogs() async {
     Random random = Random();
 
-    for (int i = 1; i <= 30; i++) {
+    for (int i = 1; i <= 100; i++) {
       String dogID = 'dogID$i';
       String dogName = faker.animal.name();
       List<String> dogPersonality = [faker.randomGenerator.boolean() ? "Energetic" : "Friendly"];
@@ -78,19 +78,19 @@ class TestDataService {
   faker.randomGenerator.integer(360) - 180.0, // Longitude between -180 and 180
 );
 
-      DateTime playdateDate = DateTime.now().add(Duration(days: random.nextInt(30)));
+      DateTime playdateDate = DateTime.now().add(Duration(days: random.nextInt(100)));
 
       // Create playdate document
       await _db.collection('playpaws').doc('playdates').collection('playdates').doc(playdateID).set({
         'date': playdateDate,
         'location': playdateLocation,
         'dogIDs': [
-          _db.collection('dogs').doc('dogID${random.nextInt(30) + 1}'),
-          _db.collection('dogs').doc('dogID${random.nextInt(30) + 1}'),
+          _db.collection('dogs').doc('dogID${random.nextInt(100) + 1}'),
+          _db.collection('dogs').doc('dogID${random.nextInt(100) + 1}'),
         ],
         'confirmedDogOwners': [
-          _db.collection('users').doc('userID${random.nextInt(30) + 1}'),
-          _db.collection('users').doc('userID${random.nextInt(30) + 1}')
+          _db.collection('users').doc('userID${random.nextInt(100) + 1}'),
+          _db.collection('users').doc('userID${random.nextInt(100) + 1}')
         ],
         'status': ['Pending'],
       });
@@ -103,8 +103,8 @@ class TestDataService {
 
     for (int i = 1; i <= 10; i++) {
       String matchID = 'matchID$i';
-      String dog1ID = 'dogID${random.nextInt(30) + 1}';
-      String dog2ID = 'dogID${random.nextInt(30) + 1}';
+      String dog1ID = 'dogID${random.nextInt(100) + 1}';
+      String dog2ID = 'dogID${random.nextInt(100) + 1}';
       String playdateID = 'playdateID${random.nextInt(10) + 1}';
 
       // Create match document
@@ -114,8 +114,8 @@ class TestDataService {
         'dog2': dog2ID,
         'playdateID': _db.collection('playpaws').doc('playdates').collection('playdates').doc(playdateID),
         'status': ['Matched'],
-        'user1': _db.collection('users').doc('userID${random.nextInt(30) + 1}'),
-        'user2': _db.collection('users').doc('userID${random.nextInt(30) + 1}'),
+        'user1': _db.collection('users').doc('userID${random.nextInt(100) + 1}'),
+        'user2': _db.collection('users').doc('userID${random.nextInt(100) + 1}'),
       });
     }
   }
