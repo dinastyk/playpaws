@@ -132,16 +132,15 @@ Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
   if (matchSnapshot.docs.isEmpty) {
     print("No pending matches found for this dog. Creating a new match.");
 
-    // Create a new match document if no pending matches exist
+    // create a new match document if no pending matches exist
     await matchData.add({
-      "dog1": "dogId1", // Replace with the actual dog ID for dog1
-      "dog2": dogDoc.id, // The dogId of the current dog
-      "status": "pending", // The initial status of the match
-      // Add any other fields you need, like timestamps, user IDs, etc.
+      "dog1": dog_id, //gets current dog
+      "dog2": dogDoc.id, // The dogId of the matched dog
+      "status": "pending", // pending match
       "createdAt": FieldValue.serverTimestamp(),
     });}
 else{
-  // If there are any matches, update the status to "matched"
+  // If not empty, update the status to "matched"
   for (var doc in matchSnapshot.docs) {
     String matchId = doc.id;
     await matchData.doc(matchId).update({
@@ -155,10 +154,9 @@ Future<void> rejectDog(QueryDocumentSnapshot dogDoc) async {
     final FirebaseFirestore db = FirebaseFirestore.instance;
     final matchData = db.collection('matches');
       await matchData.add({
-      "dog1": "dogId1", // Replace with the actual dog ID for dog1
-      "dog2": dogDoc.id, // The dogId of the current dog
-      "status": "pending", // The initial status of the match
-      // Add any other fields you need, like timestamps, user IDs, etc.
+      "dog1": dog_id, 
+      "dog2": dogDoc.id, 
+      "status": "rejected", // rejected
       "createdAt": FieldValue.serverTimestamp(),
     });
 }
