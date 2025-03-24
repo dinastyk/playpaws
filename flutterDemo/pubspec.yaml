@@ -39,7 +39,7 @@ dependencies:
   cloud_firestore: ^5.6.3 # i think this is for fireSTORE databases
   google_sign_in: ^6.2.2
   logger: ^2.5.0
-  flutter_swipable: 
+  flutter_card_swiper: 
 
 dev_dependencies:
   flutter_test:
