@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:playpaws_test/screens/login_screen.dart';
 import 'settings_page.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(const PlayPawsProfile());

@@ -51,6 +51,7 @@ dependencies:
       ref: master
   http:
   confetti: ^0.7.0
+  flutter_swipable: 
 
 dev_dependencies:
   flutter_test:
