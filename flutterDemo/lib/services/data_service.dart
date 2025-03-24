@@ -1,110 +1,144 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:faker/faker.dart';
 import 'dart:math';
 
 class TestDataService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final Random _random = Random();
+  final faker = Faker();
 
-  // Helper function to generate random names
-  String generateRandomName() {
-    List<String> names = ['Luna', 'Max', 'Bella', 'Charlie', 'Lucy', 'Rocky', 'Milo', 'Daisy', 'Cooper', 'Buddy'];
-    return names[_random.nextInt(names.length)];
-  }
+  // Generate fake user data and upload to Firestore
+  Future<void> createFakeUsers() async {
+    Random random = Random();
 
-  // Create 30 Users
-  Future<void> createUsers() async {
-    for (int i = 1; i <= 30; i++) {
+    for (int i = 1; i <= 100; i++) {
       String userID = 'userID$i';
-      String userName = generateRandomName();
+      String userName = faker.person.name();
       String userEmail = 'user$userID@example.com';
-      
+      String userPhone = faker.phoneNumber.us();
+      String profilePicUrl = 'https://picsum.photos/200/200?random=$i'; // Random profile pic URL
+
+      // Create user document in Firestore
       await _db.collection('users').doc(userID).set({
         'name': userName,
         'email': userEmail,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-  }
-
-  // Create 30 Dogs for the Users
-  Future<void> createDogs() async {
-    for (int i = 1; i <= 30; i++) {
-      String dogID = 'dog$i';
-      String name = generateRandomName();
-      String breed = ['Pomeranian', 'Golden Retriever', 'Bulldog', 'Beagle', 'Poodle', 'Labrador', 'Chihuahua', 'Yorkie', 'Shih Tzu', 'Dachshund'][_random.nextInt(10)];
-      String size = ['Small', 'Medium', 'Large'][_random.nextInt(3)];
-      String temperament = ['Happy', 'Friendly', 'Energetic', 'Calm', 'Playful'][_random.nextInt(5)];
-      String ownerID = 'userID${_random.nextInt(30) + 1}'; // Randomly assigning owners
-      
-      // Random geo location
-      GeoPoint location = GeoPoint(43.0 + _random.nextDouble(), 74.0 + _random.nextDouble());
-      
-      // Add dog to Firestore
-      await _db.collection('dogs').doc(dogID).set({
-        'name': name,
-        'breed': breed,
-        'size': size,
-        'personality': [temperament],
-        'ownerID': ownerID,
-        'availableForPlaydates': true,
-        'location': location,
+        'phone': userPhone,
+        'profilePictureURL': profilePicUrl,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-        'age': _random.nextInt(12), // Age between 0 and 11 years
-        'energyLevel': ['Low', 'Medium', 'High'][_random.nextInt(3)],
-        'medicalConditions': 'None',
-        'weight': _random.nextDouble() * 10 + 5, // Weight between 5 and 15 kg
       });
     }
   }
 
-  // Create Playdates
-  Future<void> createPlaydates() async {
-    for (int i = 1; i <= 30; i++) {
-      String playdateID = 'playdate$i';
-      String dogID1 = 'dog${_random.nextInt(30) + 1}';
-      String dogID2 = 'dog${_random.nextInt(30) + 1}';
+  // Generate fake dog data and upload to Firestore
+  Future<void> createFakeDogs() async {
+    Random random = Random();
 
-      // Ensuring that dog1 and dog2 are not the same
-      while (dogID1 == dogID2) {
-        dogID2 = 'dog${_random.nextInt(30) + 1}';
-      }
+    for (int i = 1; i <= 100; i++) {
+      String dogID = 'dogID$i';
+      String dogName = faker.animal.name();
+      List<String> dogPersonality = [faker.randomGenerator.boolean() ? "Energetic" : "Friendly"];
+      String dogBreed = faker.randomGenerator.element(['Pomeranian', 'Bulldog', 'Golden Retriever']);
+      String dogPictureUrl = 'https://picsum.photos/200/200?random=$i'; // Random dog pic URL
 
+      // Create dog document in Firestore
+      await _db.collection('dogs').doc(dogID).set({
+        'name': dogName,
+        'breed': dogBreed,
+        'personality': dogPersonality,
+        'dogPictureURL': dogPictureUrl,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  // Create fake playdates and upload to Firestore
+  Future<void> createFakePlaydates() async {
+    Random random = Random();
+
+    for (int i = 1; i <= 100; i++) {
+      String playdateID = 'playdateID$i';
+      GeoPoint playdateLocation = GeoPoint(
+        faker.randomGenerator.integer(180) - 90.0, // Latitude between -90 and 90
+        faker.randomGenerator.integer(360) - 180.0, // Longitude between -180 and 180
+      );
+
+      DateTime playdateDate = DateTime.now().add(Duration(days: random.nextInt(100)));
+
+      // Create playdate document in Firestore
       await _db.collection('playdates').doc(playdateID).set({
-        'dog1ID': dogID1,
-        'dog2ID': dogID2,
-        'scheduledDate': Timestamp.fromDate(DateTime.now().add(Duration(days: _random.nextInt(30)))),
-        'status': 'Pending', // Status of the playdate
+        'date': playdateDate,
+        'location': playdateLocation,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
     }
   }
 
-  // Create Matches (Similar to Playdates but with confirmed interactions)
-  Future<void> createMatches() async {
-    for (int i = 1; i <= 30; i++) {
-      String matchID = 'match$i';
-      String dogID1 = 'dog${_random.nextInt(30) + 1}';
-      String dogID2 = 'dog${_random.nextInt(30) + 1}';
+  // Create fake matches and upload to Firestore
+  Future<void> createFakeMatches() async {
+    Random random = Random();
 
-      // Ensuring that dog1 and dog2 are not the same
-      while (dogID1 == dogID2) {
-        dogID2 = 'dog${_random.nextInt(30) + 1}';
-      }
-
+    for (int i = 1; i <= 100; i++) {
+      String matchID = 'matchID$i';
+      String dog1ID = 'dogID${random.nextInt(100) + 1}';
+      String dog2ID = 'dogID${random.nextInt(100) + 1}';
+      String user1ID = 'userID${random.nextInt(100) + 1}';
+      String user2ID = 'userID${random.nextInt(100) + 1}';
+      
+      // Create match document in Firestore
       await _db.collection('matches').doc(matchID).set({
-        'dog1ID': dogID1,
-        'dog2ID': dogID2,
-        'matchDate': Timestamp.fromDate(DateTime.now().add(Duration(days: _random.nextInt(30)))),
-        'status': 'Matched', // Status of the match
+        'dog1': dog1ID,
+        'dog2': dog2ID,
+        'user1': user1ID,
+        'user2': user2ID,
+        'status': 'matched',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
     }
   }
 
-  // Call all the methods to create users, dogs, playdates, and matches
+  // Create fake chat data and upload to Firestore
+  Future<void> createFakeChats() async {
+    Random random = Random();
+
+    for (int i = 1; i <= 100; i++) {
+      String chatID = 'chatID$i';
+      String user1ID = 'userID${random.nextInt(100) + 1}';
+      String user2ID = 'userID${random.nextInt(100) + 1}';
+      
+      // Create chat document in Firestore
+      await _db.collection('chats').doc(chatID).set({
+        'user1': user1ID,
+        'user2': user2ID,
+        'lastMessageTimestamp': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Add some fake messages to the chat
+      for (int j = 1; j <= 10; j++) {
+        String messageID = 'messageID${random.nextInt(1000) + 1}';
+        String messageSender = random.nextBool() ? user1ID : user2ID;
+        String messageContent = faker.lorem.sentence();
+
+        await _db.collection('chats').doc(chatID).collection('messages').doc(messageID).set({
+          'senderId': messageSender,
+          'content': messageContent,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+  }
+
+  // Call all methods to create fake data
   Future<void> generateTestData() async {
-    await createUsers();
-    await createDogs();
-    await createPlaydates();
-    await createMatches();
+    await createFakeUsers();
+    await createFakeDogs();
+    await createFakePlaydates();
+    await createFakeMatches();
+    await createFakeChats();
+    print('Test data created successfully!');
   }
 }
