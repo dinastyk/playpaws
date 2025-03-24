@@ -41,6 +41,7 @@ dependencies:
   logger: ^2.5.0
   flutter_swipable: 
   faker: ^2.1.0
+  google_fonts: ^4.0.0
 
 dev_dependencies:
   flutter_test:
