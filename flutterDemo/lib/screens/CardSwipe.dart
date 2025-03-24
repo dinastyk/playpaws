@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
-
+final dog_id = "dogId1";
 Future<List<QueryDocumentSnapshot>> getDogs() async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
-  final dog_id = "dogId1";
+  
   final dogData = db.collection("dogs");
   final matchData = db.collection("matches");
 
@@ -123,9 +123,10 @@ Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final matchData = db.collection('matches');
 
-  // Query for matches where the current dog is dog2 and status is "pending"
+  // Query for matches where the matched dog is dog1 and dog 2 is current_dog and status is "pending"
   QuerySnapshot matchSnapshot = await matchData
-      .where("dog2", isEqualTo: dogDoc.id)
+      .where("dog1", isEqualTo: dogDoc.id)
+      .where("dog2", isEqualTo: dog_id)
       .where("status", isEqualTo: "pending")
       .get();
   if (matchSnapshot.docs.isEmpty) {
