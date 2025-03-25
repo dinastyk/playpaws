@@ -47,7 +47,9 @@ class SettingsPage extends StatelessWidget
             title: const Text("Customer Support"),
             subtitle: const Text("Get help"),
             onTap: () {},
-          )
+          ),
+
+          
         ]
       ),
     );
