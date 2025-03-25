@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'profile_ui.dart';
 
 class SettingsPage extends StatelessWidget
 {
@@ -18,33 +19,34 @@ class SettingsPage extends StatelessWidget
             leading: const Icon(Icons.person),
             title: const Text("Profile"),
             subtitle: const Text("Manage your account"),
-            trailing: PopupMenuButton<String>
-            (
-              onSelected: (value) 
+              onTap: () 
               {
-                if (value == 'view')
-                {
-                  //go to profile
-                }
-                else if (value == 'edit')
-                {
-                  //go to edit profile
-                }
+                Navigator.push
+                (
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
               },
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>
-              [
-                const PopupMenuItem<String>
-                (
-                  value: 'view',
-                  child: Text('View Profile'),
-                ),
-                const PopupMenuItem<String>
-                (
-                  value: 'edit',
-                  child: Text('Edit Profile'),
-                )
-              ]  
             ),
+          
+          const Divider(),
+          
+          ListTile 
+          (
+            leading: const Icon(Icons.pets),
+            title: const Text("Your Pets"),
+            subtitle: const Text("See what pets you have, add or remove pets"),
+            onTap: () {},
+          ),
+
+          const Divider(),
+          
+          ListTile 
+          (
+            leading: const Icon(Icons.help),
+            title: const Text("Customer Support"),
+            subtitle: const Text("Get help"),
+            onTap: () {},
           )
         ]
       ),
