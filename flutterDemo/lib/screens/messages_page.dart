@@ -19,7 +19,7 @@ class MessagesPageState extends State<MessagesPage>
   final TextEditingController _messageController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? user = FirebaseAuth.instance.currentUser;
-  String receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
+  late String receiverID;
   String ? chatID;
   //final List<String> _messages = [];
   
