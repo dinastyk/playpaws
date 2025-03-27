@@ -7,8 +7,8 @@ import '../firebase_options.dart';
 
 class MessagesPage extends StatefulWidget
 {
-  final String receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
-  const MessagesPage({super.key, required receiverID});
+  final String receiverID;
+  const MessagesPage({super.key, required this.receiverID});
 
   @override
   MessagesPageState createState() => MessagesPageState();
@@ -28,13 +28,17 @@ class MessagesPageState extends State<MessagesPage>
   void initState()
   {
     super.initState();
-    //receiverID = widget.receiverID;
+    
     //receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
-    chatID = user!.uid.hashCode != receiverID.hashCode 
-    ? "${user!.uid}_$receiverID"
-    : "${receiverID}_${user!.uid}";
-    print('ChatID: $chatID');   // testing if chat is working properly
+    //chatID = user!.uid.hashCode != receiverID.hashCode 
+    //? "${user!.uid}_$receiverID"
+    //: "${receiverID}_${user!.uid}";
+    receiverID = widget.receiverID;
+    List<String> ids = [user!.uid, receiverID];
+    ids.sort();
+    chatID = ids.join("_"); 
     //print('UserID: $user');
+    print('ChatID: $chatID');   // testing if chat is working properl
     print('ReceiverID: $receiverID');
   } 
 
