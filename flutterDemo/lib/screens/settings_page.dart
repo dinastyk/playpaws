@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:playpaws_test/screens/login_screen.dart';
 import 'profile_ui.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class SettingsPage extends StatelessWidget
 {
@@ -49,7 +52,29 @@ class SettingsPage extends StatelessWidget
             onTap: () {},
           ),
 
-          
+          Align
+          (
+            alignment: Alignment.bottomRight,
+            child: Padding
+            (
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton
+              (
+                onPressed: () async
+                {
+                  await FirebaseAuth.instance.signOut();
+                  if (context.mounted)
+                  {
+                    Navigator.of(context).pushReplacement
+                    (
+                      MaterialPageRoute(builder: (context) => LoginScreen())
+                    );
+                  }
+                },
+                child: Text("Logout"),
+              )
+            ),
+          ) 
         ]
       ),
     );

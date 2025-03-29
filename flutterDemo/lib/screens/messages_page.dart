@@ -40,6 +40,12 @@ class MessagesPageState extends State<MessagesPage>
     //print('UserID: $user');
     print('ChatID: $chatID');   // testing if chat is working properl
     print('ReceiverID: $receiverID');
+    /*
+    Use reference!!!
+    User the “reference” field type to “sync” the recieverID and senderID to appropriate UserIDs
+    Corresponding UserID
+    */
+
   } 
 
   @override
