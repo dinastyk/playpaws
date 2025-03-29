@@ -7,8 +7,8 @@ import '../firebase_options.dart';
 
 class MessagesPage extends StatefulWidget
 {
-  final String receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
-  const MessagesPage({super.key, required receiverID});
+  final String receiverID;
+  const MessagesPage({super.key, required this.receiverID});
 
   @override
   MessagesPageState createState() => MessagesPageState();
@@ -19,7 +19,7 @@ class MessagesPageState extends State<MessagesPage>
   final TextEditingController _messageController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? user = FirebaseAuth.instance.currentUser;
-  String receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
+  late String receiverID;
   String ? chatID;
   //final List<String> _messages = [];
   
@@ -28,14 +28,24 @@ class MessagesPageState extends State<MessagesPage>
   void initState()
   {
     super.initState();
-    //receiverID = widget.receiverID;
+    
     //receiverID = 'f0kBZmUBUFR3ef8zVZwcTiDetB22';
-    chatID = user!.uid.hashCode != receiverID.hashCode 
-    ? "${user!.uid}_$receiverID"
-    : "${receiverID}_${user!.uid}";
-    print('ChatID: $chatID');   // testing if chat is working properly
+    //chatID = user!.uid.hashCode != receiverID.hashCode 
+    //? "${user!.uid}_$receiverID"
+    //: "${receiverID}_${user!.uid}";
+    receiverID = widget.receiverID;
+    List<String> ids = [user!.uid, receiverID];
+    ids.sort();
+    chatID = ids.join("_"); 
     //print('UserID: $user');
+    print('ChatID: $chatID');   // testing if chat is working properl
     print('ReceiverID: $receiverID');
+    /*
+    Use reference!!!
+    User the “reference” field type to “sync” the recieverID and senderID to appropriate UserIDs
+    Corresponding UserID
+    */
+
   } 
 
   @override
