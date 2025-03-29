@@ -13,45 +13,50 @@ class SettingsPage extends StatelessWidget
   {
     return Scaffold
     (
-      body: ListView
+      body: Stack 
       (
-        children:
+        children: 
         [
-          ListTile
+          ListView
           (
-            leading: const Icon(Icons.person),
-            title: const Text("Profile"),
-            subtitle: const Text("Manage your account"),
-              onTap: () 
-              {
-                Navigator.push
-                (
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
-              },
-            ),
-          
-          const Divider(),
-          
-          ListTile 
-          (
-            leading: const Icon(Icons.pets),
-            title: const Text("Your Pets"),
-            subtitle: const Text("See what pets you have, add or remove pets"),
-            onTap: () {},
-          ),
+            children:
+            [
+              ListTile
+              (
+                leading: const Icon(Icons.person),
+                title: const Text("Profile"),
+                subtitle: const Text("Manage your account"),
+                  onTap: () 
+                  {
+                    Navigator.push
+                    (
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                  },
+                ),
+              
+              const Divider(),
+              
+              ListTile 
+              (
+                leading: const Icon(Icons.pets),
+                title: const Text("Your Pets"),
+                subtitle: const Text("See what pets you have, add or remove pets"),
+                onTap: () {},
+              ),
 
-          const Divider(),
-          
-          ListTile 
-          (
-            leading: const Icon(Icons.help),
-            title: const Text("Customer Support"),
-            subtitle: const Text("Get help"),
-            onTap: () {},
+              const Divider(),
+              
+              ListTile 
+              (
+                leading: const Icon(Icons.help),
+                title: const Text("Customer Support"),
+                subtitle: const Text("Get help"),
+                onTap: () {},
+              ),
+            ],
           ),
-
           Align
           (
             alignment: Alignment.bottomRight,
@@ -72,10 +77,10 @@ class SettingsPage extends StatelessWidget
                   }
                 },
                 child: Text("Logout"),
-              )
+              ),
             ),
-          ) 
-        ]
+          ),
+        ],
       ),
     );
   }
