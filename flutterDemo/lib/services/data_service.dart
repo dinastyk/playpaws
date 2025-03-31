@@ -65,13 +65,24 @@ class TestDataService {
     });
   }
 
+  // Generate 50 users and their corresponding dogs
+  Future<void> createMultipleUsersAndDogs() async {
+    // Create 50 users and 50 dogs
+    for (int i = 0; i < 50; i++) {
+      String dogId = 'dogId${i + 1}';
+      await createDog(dogId);  // Create a dog and add it to Firestore
+      
+      String userId = 'userId${i + 1}';
+      await createUser(userId, dogId);  // Create a user and add it to Firestore with a corresponding dog
+    }
+  }
   // Create playdates for random users and dogs
   Future<void> createPlaydate(List<String> userIds, List<String> dogIds) async {
     String playdateId = 'playdateId${random.nextInt(1000)}';
     List<String> selectedUsers = [userIds[random.nextInt(userIds.length)], userIds[random.nextInt(userIds.length)]];
     List<String> selectedDogs = [dogIds[random.nextInt(dogIds.length)], dogIds[random.nextInt(dogIds.length)]];
     
-    await _db.collection('playpaws/playdates').doc(playdateId).set({
+    await _db.collection('playdates').doc(playdateId).set({
       'confirmedDogOwners': selectedUsers.map((id) => _db.doc('/users/$id')).toList(),
       'dogIDs': selectedDogs.map((id) => _db.doc('/dogs/$id')).toList(), // Using references to dogs here
       'location': GeoPoint(
@@ -89,7 +100,7 @@ class TestDataService {
     String dog1 = dogIds[random.nextInt(dogIds.length)];
     String dog2 = dogIds[random.nextInt(dogIds.length)];
     
-    await _db.collection('playpaws/matches').doc(matchId).set({
+    await _db.collection('matches').doc(matchId).set({
       'dog1': _db.doc('/dogs/$dog1'),
       'dog2': _db.doc('/dogs/$dog2'),
       'createdOn': FieldValue.serverTimestamp(),
@@ -121,6 +132,43 @@ class TestDataService {
     // Create matches
     for (int i = 1; i <= 30; i++) {
       await createMatch(dogIds);
+    }
+  }
+
+ // Create a chat with random messages between users
+  Future<void> createChat(List<String> userIds) async {
+    String chatId = 'chatId${random.nextInt(1000)}';
+
+    // Select two random users for the chat
+    String user1 = userIds[random.nextInt(userIds.length)];
+    String user2 = userIds[random.nextInt(userIds.length)];
+
+    // Create the chat document
+    await _db.collection('chats').doc(chatId).set({
+      'user1': _db.doc('/users/$user1'),
+      'user2': _db.doc('/users/$user2'),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Create 5 messages for the chat
+    for (int i = 0; i < 5; i++) {
+      String messageId = 'messageId${random.nextInt(1000)}';
+      String sender = random.nextBool() ? user1 : user2; // Randomly choose sender
+
+      await _db.collection('chats').doc(chatId).collection('messages').doc(messageId).set({
+        'sender': _db.doc('/users/$sender'),
+        'message': faker.lorem.sentence(),
+        'sentAt': Timestamp.now(),
+        'status': 'Sent',
+      });
+    }
+  }
+
+  // Create a list of test data with users and chats
+  Future<void> createTestData(List<String> userIds) async {
+    // Create chats and populate with messages
+    for (int i = 0; i < 3; i++) {
+      await createChat(userIds);
     }
   }
 }

@@ -1,184 +1,188 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
 
-class CalendarPage extends StatefulWidget {
-  const CalendarPage({super.key});
+class CalendarScreen extends StatefulWidget {
+  const CalendarScreen({super.key});
 
   @override
-  _CalendarPageState createState() => _CalendarPageState();
+  _CalendarScreenState createState() => _CalendarScreenState();
 }
 
-class _CalendarPageState extends State<CalendarPage> {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final User? user = FirebaseAuth.instance.currentUser;
-  List<DateTime> playdates = [];
+class _CalendarScreenState extends State<CalendarScreen> {
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _selectedDay = DateTime.now();
+  DateTime _focusedDay = DateTime.now(); // Define _focusedDay
+  List<String> _upcomingPlaydates = [];
 
   @override
   void initState() {
     super.initState();
-    _loadPlaydates(); // Load playdates when screen opens
+    _loadPlaydates();
   }
 
+  /// Fetch playdates from Firebase
   Future<void> _loadPlaydates() async {
-    if (user == null) return;
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('playdates').get();
 
-    QuerySnapshot snapshot = await _db
-        .collection('users')
-        .doc(user!.uid)
-        .collection('playdates')
-        .orderBy('date', descending: false)
-        .get();
-
-    setState(() {
-      playdates = snapshot.docs
-          .map((doc) => (doc['date'] as Timestamp).toDate())
-          .toList();
-    });
-  }
-
-  Future<void> _addPlaydate(DateTime playdate) async {
-    if (user == null) return;
-
-    await _db
-        .collection('users')
-        .doc(user!.uid)
-        .collection('playdates')
-        .add({'date': playdate});
-
-    setState(() {
-      playdates.add(playdate);
-    });
-
-    _addToGoogleCalendar(playdate);
-  }
-
-  Future<void> _deletePlaydate(int index) async {
-    if (user == null) return;
-
-    QuerySnapshot snapshot = await _db
-        .collection('users')
-        .doc(user!.uid)
-        .collection('playdates')
-        .where('date', isEqualTo: playdates[index])
-        .get();
+    List<String> upcoming = [];
 
     for (var doc in snapshot.docs) {
-      await doc.reference.delete();
+      DateTime date = (doc['date'] as Timestamp).toDate();
+      String eventDetails =
+          "${DateFormat('MMM dd, hh:mm a').format(date)} - ${doc['location']}";
+
+      if (date.isAfter(DateTime.now())) {
+        upcoming.add(eventDetails);
+      }
     }
 
+    upcoming.sort();
+    if (upcoming.length > 5) upcoming = upcoming.sublist(0, 5);
+
     setState(() {
-      playdates.removeAt(index);
+      _upcomingPlaydates = upcoming;
     });
   }
 
-  Future<void> _pickDateTime() async {
-    DateTime now = DateTime.now();
-    
-    DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-    );
+  void _showCreatePlaydateDialog() async {
+    TextEditingController locationController = TextEditingController();
+    DateTime selectedDateTime = DateTime.now();
+    String? selectedDogId; // Nullable because it starts as unselected
 
-    if (selectedDate == null) return;
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-    TimeOfDay? selectedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
+    // Get user's dog ID
+    DocumentSnapshot userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    if (!userDoc.exists || userDoc['dogId'] == null) return;
 
-    if (selectedTime == null) return;
+    String userDogId = userDoc['dogId'];
 
-    DateTime fullDateTime = DateTime(
-      selectedDate.year,
-      selectedDate.month,
-      selectedDate.day,
-      selectedTime.hour,
-      selectedTime.minute,
-    );
+    // Fetch matched dogs
+    QuerySnapshot matchSnapshot = await FirebaseFirestore.instance
+        .collection('matches')
+        .where('status', isEqualTo: 'Accepted')
+        .where(Filter.or(
+          Filter("dog1", isEqualTo: userDogId),
+          Filter("dog2", isEqualTo: userDogId),
+        ))
+        .get();
 
-    _addPlaydate(fullDateTime);
-  }
+    List<Map<String, dynamic>> matchedDogs = [];
 
-  Future<void> _addToGoogleCalendar(DateTime playdate) async {
-    final formattedDate = playdate.toUtc().toIso8601String().replaceAll(':', '').replaceAll('-', '');
-    final url =
-        'https://www.google.com/calendar/render?action=TEMPLATE&text=Dog%20Playdate&dates=${formattedDate}/${formattedDate}';
+    for (var doc in matchSnapshot.docs) {
+      String dog1Id = doc['dog1'];
+      String dog2Id = doc['dog2'];
 
-    final Uri uri = Uri.parse(url);
+      // Fetch dog details
+      DocumentSnapshot dog1Doc =
+          await FirebaseFirestore.instance.collection('dogs').doc(dog1Id).get();
+      DocumentSnapshot dog2Doc =
+          await FirebaseFirestore.instance.collection('dogs').doc(dog2Id).get();
 
-    if (!await launchUrl(uri)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open Google Calendar ❌')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Playdate added to Google Calendar! ✅')),
-      );
+      if (dog1Doc.exists && dog2Doc.exists) {
+        matchedDogs.add({
+          'dog1Id': dog1Id,
+          'dog2Id': dog2Id,
+          'dog1Name': dog1Doc['name'],
+          'dog2Name': dog2Doc['name'],
+        });
+      }
     }
+
+    // Show dialog for selecting a playdate
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Create Playdate"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                hint: Text("Select Matched Dog"),
+                value: selectedDogId,
+                onChanged: (value) {
+                  setState(() {
+                    selectedDogId = value!;
+                  });
+                },
+                items: matchedDogs.map((dog) {
+                  String dogName =
+                      (dog['dog1Id'] == userDogId) ? dog['dog2Name'] : dog['dog1Name'];
+                  return DropdownMenuItem(
+                    value: (dog['dog1Id'] == userDogId) 
+                    ? dog['dog2Id'] as String 
+                    : dog['dog1Id'] as String,
+                    child: Text(dogName),
+                  );
+                }).toList(),
+              ),
+              TextField(
+                controller: locationController,
+                decoration: InputDecoration(labelText: "Location"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (selectedDogId == null || locationController.text.isEmpty) return;
+
+                  await FirebaseFirestore.instance.collection('playdates').add({
+                    'date': selectedDateTime,
+                    'location': locationController.text,
+                    'dog1': userDogId,
+                    'dog2': selectedDogId,
+                  });
+
+                  Navigator.pop(context);
+                  _loadPlaydates(); // Refresh playdates list
+                },
+                child: Text("Create"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("📅 Calendar")),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              "Plan & Book Your Playdates!",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Choose a date and time for your dog's playdate, then add it to your Google Calendar.",
-              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: _pickDateTime,
-              icon: const Icon(Icons.calendar_today, color: Colors.white),
-              label: const Text("Pick Date & Time"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: playdates.length,
-                itemBuilder: (context, index) {
-                  DateTime playdate = playdates[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 5),
-                    child: ListTile(
-                      leading: const Icon(Icons.pets, color: Colors.blue),
-                      title: Text(
-                        DateFormat('EEE, MMM d, yyyy – hh:mm a').format(playdate),
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deletePlaydate(index),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+      appBar: AppBar(title: Text("Playdate Calendar")),
+      body: Column(
+        children: [
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 01, 01),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+            },
+            calendarFormat: _calendarFormat,
+            onFormatChanged: (format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            },
+          ),
+          SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: _showCreatePlaydateDialog,
+            child: Text("Schedule a Playdate"),
+          ),
+          SizedBox(height: 10),
+          Text("Upcoming Playdates:"),
+          ..._upcomingPlaydates.map((playdate) => ListTile(title: Text(playdate))),
+        ],
       ),
     );
   }
