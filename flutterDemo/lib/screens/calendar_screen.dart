@@ -14,7 +14,8 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _selectedDay = DateTime.now();
-  DateTime _focusedDay = DateTime.now(); // Define _focusedDay
+  DateTime _focusedDay = DateTime.now();
+  Map<DateTime, List<String>> _playdates = {};
   List<String> _upcomingPlaydates = [];
 
   @override
@@ -23,17 +24,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _loadPlaydates();
   }
 
-  /// Fetch playdates from Firebase
+  /// Fetch playdates from Firebase and populate the calendar
   Future<void> _loadPlaydates() async {
     QuerySnapshot snapshot =
         await FirebaseFirestore.instance.collection('playdates').get();
 
+    Map<DateTime, List<String>> playdateMap = {};
     List<String> upcoming = [];
 
     for (var doc in snapshot.docs) {
       DateTime date = (doc['date'] as Timestamp).toDate();
-      String eventDetails =
-          "${DateFormat('MMM dd, hh:mm a').format(date)} - ${doc['location']}";
+      String location = doc['location'];
+      String eventDetails = "${DateFormat('MMM dd, hh:mm a').format(date)} - $location";
+
+      playdateMap.putIfAbsent(date, () => []).add(eventDetails);
 
       if (date.isAfter(DateTime.now())) {
         upcoming.add(eventDetails);
@@ -44,14 +48,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (upcoming.length > 5) upcoming = upcoming.sublist(0, 5);
 
     setState(() {
+      _playdates = playdateMap;
       _upcomingPlaydates = upcoming;
     });
   }
 
+  /// Show a dialog to create a playdate
   void _showCreatePlaydateDialog() async {
     TextEditingController locationController = TextEditingController();
     DateTime selectedDateTime = DateTime.now();
-    String? selectedDogId; // Nullable because it starts as unselected
+    String? selectedDogId;
 
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -59,9 +65,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     // Get user's dog ID
     DocumentSnapshot userDoc =
         await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    if (!userDoc.exists || userDoc['dogId'] == null) return;
+    if (!userDoc.exists || userDoc['dog'] == null) return;
 
-    String userDogId = userDoc['dogId'];
+    String userDogId = userDoc['dog'].id; // Reference to the dog document
 
     // Fetch matched dogs
     QuerySnapshot matchSnapshot = await FirebaseFirestore.instance
@@ -79,7 +85,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
       String dog1Id = doc['dog1'];
       String dog2Id = doc['dog2'];
 
-      // Fetch dog details
       DocumentSnapshot dog1Doc =
           await FirebaseFirestore.instance.collection('dogs').doc(dog1Id).get();
       DocumentSnapshot dog2Doc =
@@ -95,7 +100,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
       }
     }
 
-    // Show dialog for selecting a playdate
     showDialog(
       context: context,
       builder: (context) {
@@ -105,24 +109,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                hint: Text("Select Matched Dog"),
-                value: selectedDogId,
-                onChanged: (value) {
-                  setState(() {
-                    selectedDogId = value!;
-                  });
-                },
-                items: matchedDogs.map((dog) {
-                  String dogName =
-                      (dog['dog1Id'] == userDogId) ? dog['dog2Name'] : dog['dog1Name'];
-                  return DropdownMenuItem(
-                    value: (dog['dog1Id'] == userDogId) 
-                    ? dog['dog2Id'] as String 
-                    : dog['dog1Id'] as String,
-                    child: Text(dogName),
-                  );
-                }).toList(),
-              ),
+  hint: Text("Select Matched Dog"),
+  value: selectedDogId,
+  onChanged: (value) {
+    setState(() {
+      selectedDogId = value!;
+    });
+  },
+  items: matchedDogs.map<DropdownMenuItem<String>>((dog) {
+    String dogName = (dog['dog1Id'] == userDogId) ? dog['dog2Name'] : dog['dog1Name'];
+    return DropdownMenuItem<String>(
+      value: (dog['dog1Id'] == userDogId) ? dog['dog2Id'] as String : dog['dog1Id'] as String,
+      child: Text(dogName),
+    );
+  }).toList(),
+),
+
               TextField(
                 controller: locationController,
                 decoration: InputDecoration(labelText: "Location"),
@@ -132,14 +134,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   if (selectedDogId == null || locationController.text.isEmpty) return;
 
                   await FirebaseFirestore.instance.collection('playdates').add({
-                    'date': selectedDateTime,
+                    'date': Timestamp.fromDate(selectedDateTime),
                     'location': locationController.text,
-                    'dog1': userDogId,
-                    'dog2': selectedDogId,
+                    'dogs': [FirebaseFirestore.instance.doc('dogs/$userDogId'), FirebaseFirestore.instance.doc('dogs/$selectedDogId')],
+                    'status': 'Pending',
                   });
 
                   Navigator.pop(context);
-                  _loadPlaydates(); // Refresh playdates list
+                  _loadPlaydates();
                 },
                 child: Text("Create"),
               ),
@@ -157,32 +159,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
       body: Column(
         children: [
           TableCalendar(
-            firstDay: DateTime.utc(2020, 01, 01),
-            lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            calendarFormat: _calendarFormat,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            eventLoader: (day) => _playdates[day] ?? [],
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
               });
             },
-            calendarFormat: _calendarFormat,
-            onFormatChanged: (format) {
-              setState(() {
-                _calendarFormat = format;
-              });
-            },
           ),
           SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _showCreatePlaydateDialog,
-            child: Text("Schedule a Playdate"),
+          Text("Upcoming Playdates", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _upcomingPlaydates.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_upcomingPlaydates[index]),
+                );
+              },
+            ),
           ),
-          SizedBox(height: 10),
-          Text("Upcoming Playdates:"),
-          ..._upcomingPlaydates.map((playdate) => ListTile(title: Text(playdate))),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showCreatePlaydateDialog,
+        child: Icon(Icons.add),
       ),
     );
   }
