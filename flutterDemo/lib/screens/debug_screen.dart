@@ -18,11 +18,7 @@ class _DebugScreenState extends State<DebugScreen> {
 
     final testDataService = TestDataService();
     try {
-      await testDataService.createFakeUsers();
-      await testDataService.createFakeDogs();
-      await testDataService.createFakePlaydates();
-      await testDataService.createFakeMatches();
-      await testDataService.createFakeMessages(); // Ensure messages are also generated
+      await testDataService.createFakeData(); // Ensure this method is generating all necessary data (users, dogs, etc.)
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Test data created successfully!')),

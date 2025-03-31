@@ -7,101 +7,120 @@ class TestDataService {
   final Faker faker = Faker();
   final Random random = Random();
 
+  // Generate a list of dog personalities
+  List<String> getDogPersonalities() {
+    return ['Energetic', 'Friendly', 'Calm', 'Playful'];
+  }
+
+  // Create a single dog entry
+  Future<void> createDog(String dogId) async {
+    List<String> dogPersonalities = getDogPersonalities();
+    double dogWeight = random.nextDouble() * (50 - 5) + 5; // Dog weight between 5-50 lb
+    int dogAge = random.nextInt(15) + 1; // Dog age between 1-15 years
+    String dogPictureUrl = 'https://picsum.photos/200/200?random=${random.nextInt(1000)}'; // Random dog pic URL
+    
+    await _db.collection('dogs').doc(dogId).set({
+      'name': faker.animal.name(),
+      'breed': faker.lorem.word(),
+      'weight': dogWeight,
+      'age': dogAge,
+      'energyLevel': faker.randomGenerator.element(['Low', 'Medium', 'High']),
+      'personality': dogPersonalities, // Dog's personality traits
+      'dogPictureURL': dogPictureUrl,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Create a single user entry with a reference to a dog
+  Future<void> createUser(String userId, String dogId) async {
+    String userPictureUrl = 'https://picsum.photos/200/200?random=${random.nextInt(1000)}'; // Random user pic URL
+    List<String> dogPersonalities = getDogPersonalities();
+    
+    // Select 2 random personalities for the user preferences
+    List<String> selectedPersonalities = [
+      faker.randomGenerator.element(dogPersonalities),
+      faker.randomGenerator.element(dogPersonalities)
+    ];
+
+    await _db.collection('users').doc(userId).set({
+      'email': faker.internet.email(),
+      'name': faker.person.name(),
+      'location': GeoPoint(
+        random.nextDouble() * 180 - 90,  // Latitude
+        random.nextDouble() * 360 - 180 // Longitude
+      ),
+      'dog': _db.doc('/dogs/$dogId'),
+      'profilePictureURL': userPictureUrl,
+      'preferences': {
+        'minWeight': random.nextDouble() * 20 + 5, // Min 5-25kg
+        'maxWeight': random.nextDouble() * 30 + 20, // Max 20-50kg
+        'minAge': random.nextInt(5) + 1, // Min 1-5 years
+        'maxAge': random.nextInt(10) + 5, // Max 5-15 years
+        'energyLevel': faker.randomGenerator.element(['Low', 'Medium', 'High']),
+        'preferredPersonalities': selectedPersonalities, // Preferred personalities (array of 2 random traits)
+      },
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Create playdates for random users and dogs
+  Future<void> createPlaydate(List<String> userIds, List<String> dogIds) async {
+    String playdateId = 'playdateId${random.nextInt(1000)}';
+    List<String> selectedUsers = [userIds[random.nextInt(userIds.length)], userIds[random.nextInt(userIds.length)]];
+    List<String> selectedDogs = [dogIds[random.nextInt(dogIds.length)], dogIds[random.nextInt(dogIds.length)]];
+    
+    await _db.collection('playpaws/playdates').doc(playdateId).set({
+      'confirmedDogOwners': selectedUsers.map((id) => _db.doc('/users/$id')).toList(),
+      'dogIDs': selectedDogs.map((id) => _db.doc('/dogs/$id')).toList(), // Using references to dogs here
+      'location': GeoPoint(
+        random.nextDouble() * 180 - 90,  // Latitude
+        random.nextDouble() * 360 - 180 // Longitude
+      ),
+      'date': Timestamp.now(),
+      'status': faker.randomGenerator.element(['Pending', 'Confirmed', 'Completed']),
+    });
+  }
+
+  // Generate a match between two dogs
+  Future<void> createMatch(List<String> dogIds) async {
+    String matchId = 'matchId${random.nextInt(1000)}';
+    String dog1 = dogIds[random.nextInt(dogIds.length)];
+    String dog2 = dogIds[random.nextInt(dogIds.length)];
+    
+    await _db.collection('playpaws/matches').doc(matchId).set({
+      'dog1': _db.doc('/dogs/$dog1'),
+      'dog2': _db.doc('/dogs/$dog2'),
+      'createdOn': FieldValue.serverTimestamp(),
+      'status': faker.randomGenerator.element(['Pending', 'Accepted', 'Declined']),
+    });
+  }
+
+  // Create fake data for users, dogs, playdates, etc.
   Future<void> createFakeData() async {
     List<String> dogIds = [];
     List<String> userIds = [];
     
+    // Create dogs and users
     for (int i = 1; i <= 50; i++) {
-      // Generate dog first
       String dogId = 'dogId$i';
-      double dogWeight = random.nextDouble() * (50 - 5) + 5; // Dog weight between 5-50 kg
-      int dogAge = random.nextInt(15) + 1; // Dog age between 1-15 years
-      String dogPictureUrl = 'https://picsum.photos/200/200?random=${i + 50}'; // Random dog pic URL
-      
-      await _db.collection('dogs').doc(dogId).set({
-        'name': faker.animal.name(),
-        'breed': faker.lorem.word(),
-        'weight': dogWeight,
-        'age': dogAge,
-        'energyLevel': faker.randomGenerator.element(['Low', 'Medium', 'High']),
-        'dogPictureURL': dogPictureUrl,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await createDog(dogId);
       dogIds.add(dogId);
-      
-      // Generate user with reference to this dog
+
       String userId = 'userId$i';
-      String userPictureUrl = 'https://picsum.photos/200/200?random=$i'; // Random user pic URL
-      
-      await _db.collection('users').doc(userId).set({
-        'email': faker.internet.email(),
-        'name': faker.person.name(),
-        'location': GeoPoint(
-          random.nextDouble() * 180 - 90,  // Latitude
-          random.nextDouble() * 360 - 180 // Longitude
-        ),
-        'dog': _db.doc('/dogs/$dogId'),
-        'profilePictureURL': userPictureUrl,
-        'preferences': {
-          'minWeight': random.nextDouble() * 20 + 5, // Min 5-25kg
-          'maxWeight': random.nextDouble() * 30 + 20, // Max 20-50kg
-          'minAge': random.nextInt(5) + 1, // Min 1-5 years
-          'maxAge': random.nextInt(10) + 5, // Max 5-15 years
-          'energyLevel': faker.randomGenerator.element(['Low', 'Medium', 'High'])
-        },
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await createUser(userId, dogId);
       userIds.add(userId);
     }
 
-    // Generate playdates
+    // Create playdates
     for (int i = 1; i <= 20; i++) {
-      String playdateId = 'playdateId$i';
-      List<String> selectedUsers = [userIds[random.nextInt(userIds.length)], userIds[random.nextInt(userIds.length)]];
-      List<String> selectedDogs = [dogIds[random.nextInt(dogIds.length)], dogIds[random.nextInt(dogIds.length)]];
-      
-      await _db.collection('playpaws/playdates').doc(playdateId).set({
-        'confirmedDogOwners': selectedUsers.map((id) => _db.doc('/users/$id')).toList(),
-        'dogIDs': selectedDogs.map((id) => _db.doc('/dogs/$id')).toList(),
-        'location': GeoPoint(
-          random.nextDouble() * 180 - 90,  // Latitude
-          random.nextDouble() * 360 - 180 // Longitude
-        ),
-        'date': Timestamp.now(),
-        'status': faker.randomGenerator.element(['Pending', 'Confirmed', 'Completed']),
-      });
+      await createPlaydate(userIds, dogIds);
     }
 
-    // Generate matches
+    // Create matches
     for (int i = 1; i <= 30; i++) {
-      String matchId = 'matchId$i';
-      String dog1 = dogIds[random.nextInt(dogIds.length)];
-      String dog2 = dogIds[random.nextInt(dogIds.length)];
-      
-      await _db.collection('playpaws/matches').doc(matchId).set({
-        'dog1': _db.doc('/dogs/$dog1'),
-        'dog2': _db.doc('/dogs/$dog2'),
-        'createdOn': FieldValue.serverTimestamp(),
-        'status': faker.randomGenerator.element(['Pending', 'Accepted', 'Declined']),
-      });
-    }
-
-    // Generate messages
-    for (int i = 1; i <= 50; i++) {
-      String messageId = 'messageId$i';
-      String sender = userIds[random.nextInt(userIds.length)];
-      String receiver = userIds[random.nextInt(userIds.length)];
-      
-      await _db.collection('playpaws/messages').doc(messageId).set({
-        'sender': _db.doc('/users/$sender'),
-        'receiver': _db.doc('/users/$receiver'),
-        'content': faker.lorem.sentence(),
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      await createMatch(dogIds);
     }
   }
 }
-
-  
