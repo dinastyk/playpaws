@@ -40,7 +40,10 @@ dependencies:
   google_sign_in: ^6.2.2
   logger: ^2.5.0
   flutter_swipable: 
-  faker: ^2.1.0
+  faker: ^2.1.0 # for the fake database data
+  url_launcher: ^6.1.14 #for calendar feature (opening google link)
+  table_calendar: ^3.0.9 #calendar
+  intl: ^0.18.1 #for the calendar to convert the dates into readable versions for the app
 
 dev_dependencies:
   flutter_test:
