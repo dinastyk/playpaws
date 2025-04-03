@@ -1,39 +1,44 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 final dog_id = "dogId1";
+
 Future<List<QueryDocumentSnapshot>> getDogs() async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
-  
   final dogData = db.collection("dogs");
   final matchData = db.collection("matches");
+  DocumentReference dogRef = db.collection("dogs").doc(dog_id);
 
-  // Step 1: Get the list of matches for the current dog (dog1)
-  QuerySnapshot matchSnapshot = await matchData
-      .where("dog1", isEqualTo: dog_id)
-      .get(); 
+  Set<DocumentReference> interactedDogs = {};
 
-  Set<String> matchedDogIDs = {};
-  for (var doc in matchSnapshot.docs) {
-    String matchedDogId = doc["dog2"];
-    matchedDogIDs.add(matchedDogId);
+  // Step 1: Get matches where current dog is `dog1` (already swiped)
+  QuerySnapshot matchSnapshot1 = await matchData
+      .where("dog1", isEqualTo: dogRef)
+      .get();
+
+  for (var doc in matchSnapshot1.docs) {
+    DocumentReference matchedDogRef = doc["dog2"] as DocumentReference;
+    interactedDogs.add(matchedDogRef); // Exclude all dogs dog1 swiped on
   }
-  QuerySnapshot matchedSnapshot = await matchData
-      .where("dog2", isEqualTo: dog_id)
-      .where("status", isEqualTo: "matched")
-      .get(); 
-  for (var doc in matchedSnapshot.docs) {
-    String matchedDogId = doc["dog1"];
-    matchedDogIDs.add(matchedDogId);
+
+  // Step 2: Get matches where current dog is `dog2` AND status = "Accepted"
+  QuerySnapshot matchSnapshot2 = await matchData
+      .where("dog2", isEqualTo: dogRef)
+      .where("status", isEqualTo: "Accepted") // Only remove accepted matches
+      .get();
+
+  for (var doc in matchSnapshot2.docs) {
+    DocumentReference matchedDogRef = doc["dog1"] as DocumentReference;
+    interactedDogs.add(matchedDogRef); // Remove accepted matches
   }
-  // Step 2: Query dogs collection and filter out matched dogs
+
+  // Step 3: Get all dogs and remove interacted ones
   QuerySnapshot dogSnapshot = await dogData.get();
-
   List<QueryDocumentSnapshot> filteredDogs = [];
+
   for (var dogDoc in dogSnapshot.docs) {
-    String dogID = dogDoc.id;
-    if (!matchedDogIDs.contains(dogID) && dogID != dog_id) {
+    if (!interactedDogs.contains(dogDoc.reference) && dogDoc.reference != dogRef) {
       filteredDogs.add(dogDoc);
     }
   }
@@ -41,79 +46,120 @@ Future<List<QueryDocumentSnapshot>> getDogs() async {
   return filteredDogs;
 }
 
-class Example extends StatelessWidget {
+class CardSwipe extends StatefulWidget {
+  @override
+  _CardSwipeState createState() => _CardSwipeState();
+}
+
+class _CardSwipeState extends State<CardSwipe> with TickerProviderStateMixin {
+  List<QueryDocumentSnapshot> dogs = [];
+  final CardSwiperController _swiperController = CardSwiperController();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDogs(); // Fetch initial dogs list
+  }
+
+  Future<void> fetchDogs() async {
+    List<QueryDocumentSnapshot> fetchedDogs = await getDogs();
+    setState(() {
+      dogs = fetchedDogs;
+    });
+  }
+
+  // Handle swipe action: like or reject dog
+  void onSwipeAction(int index, CardSwiperDirection direction) async {
+    if (index >= dogs.length) return;
+
+    QueryDocumentSnapshot dogDoc = dogs[index];
+    bool isLiked = direction == CardSwiperDirection.right; // Like if swiped right
+
+    if (isLiked) {
+      await matchDog(dogDoc); // Match the dog if liked
+    } else {
+      await rejectDog(dogDoc); // Reject the dog if disliked
+    }
+
+    setState(() {
+      dogs.removeAt(index); // Remove the swiped dog
+    });
+
+    // Fetch more dogs if the list is empty
+    if (dogs.isEmpty) {
+      fetchDogs();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<QueryDocumentSnapshot>>(
-        future: getDogs(), // Call getDogs() here
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No dogs to display.'));
-          }
-
-          List<Container> cards = snapshot.data!.map((dogDoc) {
-            return Container(
-              padding: EdgeInsets.all(8), 
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.network(
-                    dogDoc["dogPictureURL"],
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    dogDoc["name"],
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    dogDoc["breed"],
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
+      appBar: AppBar(title: Text("PlayPaws Match")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: dogs.isEmpty
+            ? Center(child: CircularProgressIndicator()) // Show loading indicator if no dogs
+            : CardSwiper(
+              controller: _swiperController,
+              cardsCount: dogs.length,
+              onSwipe: (previousIndex, currentIndex, direction) {
+                if (currentIndex != null) {
+                  onSwipeAction(currentIndex, direction); 
+                  }
+                  return true;
+                  },
+                onUndo: (previousIndex, currentIndex, direction) {
+                  debugPrint('Card $currentIndex was undone from ${direction.name}');
+                  return true;
+                },
+                cardBuilder: (context, index, _, __) {
+                  return DogCard(dogDoc: dogs[index]);
+                },
+                numberOfCardsDisplayed: 3, // Display 3 cards at a time
+                backCardOffset: Offset(40, 40),
+                padding: EdgeInsets.all(24.0),
               ),
-              color: Colors.blue[50],
-              margin: EdgeInsets.symmetric(vertical: 8),
-            );
-          }).toList();
+      ),
+    );
+  }
+}
 
-          return Flexible(
-            child: CardSwiper(
-              cardsCount: cards.length,
-              cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                return GestureDetector(
-                  onPanUpdate: (details) {
-                    if (details.localPosition.dx > percentThresholdX) {
-                      // Swiping right
-                      print("Swiped Right");
-                      matchDog(snapshot.data![index]);
-                    } else if (details.localPosition.dx < -percentThresholdX) {
-                      // Swiping left
-                      print("Swiped Left");
-                      rejectDog(snapshot.data![index]);
-                    }
-                  },
-                  onTap: () {
-                    print("Tapped on card");
-                  },
-                  child: cards[index],
-                );
-              },
+
+class DogCard extends StatelessWidget {
+  final QueryDocumentSnapshot dogDoc;
+  const DogCard({Key? key, required this.dogDoc}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var dogData = dogDoc.data() as Map<String, dynamic>;
+
+    return Card(
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.network(
+              dogData["dogPictureURL"] ??
+                  "https://www.ohio.edu/sites/default/files/styles/max_650x650/public/2025-03/Image.jpeg?itok=hc0EF56Z",
+              width: 300,
+              height: 300,
+              fit: BoxFit.cover,
             ),
-          );
-        },
+          ),
+          SizedBox(height: 12),
+          Text(
+            dogData["name"] ?? "No name",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 6),
+          Text(
+            dogData["breed"] ?? "Unknown breed",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
       ),
     );
   }
@@ -122,73 +168,45 @@ class Example extends StatelessWidget {
 Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final matchData = db.collection('matches');
-
-  // Query for matches where the matched dog is dog1 and dog 2 is current_dog and status is "pending"
+  DocumentReference dogRef = dogDoc.reference;
+  DocumentReference currentDogRef = db.collection('dogs').doc(dog_id);
+  /*
   QuerySnapshot matchSnapshot = await matchData
-      .where("dog1", isEqualTo: dogDoc.id)
-      .where("dog2", isEqualTo: dog_id)
-      .where("status", isEqualTo: "pending")
+      .where("dog1", isEqualTo: dogRef)
+      .where("dog2", isEqualTo: currentDogRef)
+      .where("status", isEqualTo: "Pending")
       .get();
-  if (matchSnapshot.docs.isEmpty) {
-    print("No pending matches found for this dog. Creating a new match.");
 
-    // create a new match document if no pending matches exist
+  if (matchSnapshot.docs.isEmpty) {
     await matchData.add({
-      "dog1": dog_id, //gets current dog
-      "dog2": dogDoc.id, // The dogId of the matched dog
-      "status": "pending", // pending match
-      "createdAt": FieldValue.serverTimestamp(),
-    });}
-else{
-  // If not empty, update the status to "matched"
-  for (var doc in matchSnapshot.docs) {
-    String matchId = doc.id;
-    await matchData.doc(matchId).update({
-      "status": "matched",
+      "createdOn": FieldValue.serverTimestamp(),
+      "dog1": dogRef,
+      "dog2": currentDogRef,
+      "status": "Pending",
     });
+  } else {
+    for (var doc in matchSnapshot.docs) {
+      await matchData.doc(doc.id).update({"status": "Accepted"});
+    }
   }
-}
+  */
+
+  print('Matched: $dogRef, $currentDogRef');
 }
 
 Future<void> rejectDog(QueryDocumentSnapshot dogDoc) async {
-    final FirebaseFirestore db = FirebaseFirestore.instance;
-    final matchData = db.collection('matches');
-      await matchData.add({
-      "dog1": dog_id, 
-      "dog2": dogDoc.id, 
-      "status": "rejected", // rejected
-      "createdAt": FieldValue.serverTimestamp(),
-    });
-}
-
+  final FirebaseFirestore db = FirebaseFirestore.instance;
+  final matchData = db.collection('matches');
+  DocumentReference dogRef = dogDoc.reference;
+  DocumentReference currentDogRef = db.collection('dogs').doc(dog_id);
 
 /*
-import 'package:flutter/material.dart';
-import "dog_cards.dart";
-class CardSwipe extends StatefulWidget {
-  @override
-  _CardSwipeState createState() => _CardSwipeState();
+  await matchData.add({
+    "createdOn": FieldValue.serverTimestamp(),
+    "dog1": currentDogRef,
+    "dog2": dogRef,
+    "status": "Rejected",
+  });
+  */
+  print('Rejected: $dogRef, $currentDogRef');
 }
-
-class _CardSwipeState extends State<CardSwipe> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Container(
-          height: 300,
-          width: 200,
-          child: Stack(
-            children: [
-              //card stack
-              DogCard(color: Colors.deepPurple),
-              DogCard(color: Colors.green),
-              DogCard(color: Colors.blue),
-            ]
-          )
-        )
-      )
-    );
-  }
-}
-*/

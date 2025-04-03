@@ -17,7 +17,7 @@ class HomePage extends StatelessWidget
         [
           Expanded
           (
-            child: SwipeCardsDemo(),
+            child: CardSwipe(),
           )
         ]
       )
