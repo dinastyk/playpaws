@@ -13,13 +13,14 @@ import 'notifications_page.dart';
 import 'messages_page.dart';
 import 'login_screen.dart';
 import 'home_page.dart';
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NavigationBarApp extends StatelessWidget {
   const NavigationBarApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // return MaterialApp(theme: ThemeData(useMaterial3: true), home: const NavigationExample());
     return MaterialApp(
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
@@ -37,30 +38,21 @@ class NavigationExample extends StatefulWidget {
   State<NavigationExample> createState() => _NavigationExampleState();
 }
 
-class _NavigationExampleState extends State<NavigationExample> 
-{
+class _NavigationExampleState extends State<NavigationExample> {
   int currentPageIndex = 0;
 
-  final List<Widget> pages = 
-  [
+  final List<Widget> pages = [
     const HomePage(),
     const NotificationsPage(),
     const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
     const SettingsPage(),
+    const CalendarPage(), // Added new Calendar Page
     const DebugScreen(),
   ];
 
   @override
-  Widget build(BuildContext context) 
-  {
-    final ThemeData theme = Theme.of(context);
-    // final ThemeData theme =  ThemeData(
-    //     colorScheme: ColorScheme.fromSeed(
-    //         seedColor: const Color.fromARGB(255, 55, 90, 180)),
-    //     useMaterial3: true,
-    //   );
-    return Scaffold
-    (
+  Widget build(BuildContext context) {
+    return Scaffold(
       body: pages[currentPageIndex],
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
@@ -70,39 +62,69 @@ class _NavigationExampleState extends State<NavigationExample>
         },
         indicatorColor: Colors.amber,
         selectedIndex: currentPageIndex,
-        destinations: const <Widget>
-        [
-          NavigationDestination
-          (
+        destinations: const <Widget>[
+          NavigationDestination(
             selectedIcon: Icon(Icons.home),
             icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
-          NavigationDestination
-          (
+          NavigationDestination(
             icon: Badge(child: Icon(Icons.notifications_sharp)),
             label: 'Notifications',
           ),
-          NavigationDestination
-          (
+          NavigationDestination(
             icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
             label: 'Messages',
           ),
-          NavigationDestination
-          (
+          NavigationDestination(
             icon: Badge(child: Icon(Icons.settings_sharp)),
-            label: 'Settings'
-          ), NavigationDestination(
-            icon: Icon(Icons.bug_report), // Icon for debug screen
+            label: 'Settings',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_today), // Calendar icon
+            label: 'Calendar',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bug_report),
             label: 'Debug',
           ),
         ],
       ),
-    ); 
+    );
   }
 }
 
+// 📅 New Calendar Page with "Add to Google Calendar" Button
+class CalendarPage extends StatelessWidget {
+  const CalendarPage({super.key});
 
+  void _addToGoogleCalendar(DateTime playdate) async {
+    final formattedDate = playdate.toUtc().toIso8601String().replaceAll(':', '').replaceAll('-', '');
+    final url =
+        'https://www.google.com/calendar/render?action=TEMPLATE&text=Dog%20Playdate&dates=${formattedDate}/${formattedDate}';
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      print('Could not launch $url');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Calendar")),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            _addToGoogleCalendar(DateTime.now().add(Duration(days: 1))); // Example: Adds a playdate for tomorrow
+          },
+          child: Text("Add to Google Calendar"),
+        ),
+      ),
+    );
+  }
+}
 /*
 // class TabBarDemo extends StatelessWidget {
 //   const TabBarDemo({super.key});
