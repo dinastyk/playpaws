@@ -45,50 +45,45 @@ Future<List<QueryDocumentSnapshot>> getDogs() async {
 
   return filteredDogs;
 }
+class CardSwipe extends StatefulWidget {
+  final List<QueryDocumentSnapshot> dogs;
 
-class Example extends StatefulWidget {
+  const CardSwipe({Key? key, required this.dogs}) : super(key: key);
+
   @override
-  _ExampleState createState() => _ExampleState();
+  _CardSwipeState createState() => _CardSwipeState();
 }
-
-class _ExampleState extends State<Example> with TickerProviderStateMixin {
-  List<QueryDocumentSnapshot> dogs = [];
+ class _CardSwipeState extends State<CardSwipe> with TickerProviderStateMixin {
   final CardSwiperController _swiperController = CardSwiperController();
+  int _currentIndex = 0;  // track current index of the card being shown
 
-  @override
-  void initState() {
-    super.initState();
-    fetchDogs(); // Fetch initial dogs list
-  }
+  void onSwipeAction(int previousIndex, CardSwiperDirection direction) async {
+    if (previousIndex < 0 || previousIndex >= widget.dogs.length) return;
 
-  Future<void> fetchDogs() async {
-    List<QueryDocumentSnapshot> fetchedDogs = await getDogs();
-    setState(() {
-      dogs = fetchedDogs;
-    });
-  }
-
-  // Handle swipe action: like or reject dog
-  void onSwipe(int index, CardSwiperDirection direction) async {
-    if (index >= dogs.length) return;
-
-    QueryDocumentSnapshot dogDoc = dogs[index];
-    bool isLiked = direction == CardSwiperDirection.right; // Like if swiped right
-
+    // debug: print details of the dog being swiped
+    QueryDocumentSnapshot dogDoc = widget.dogs[previousIndex];
+    var dogData = dogDoc.data() as Map<String, dynamic>;
+    print('Swiping on dog: ${dogData['name']}');
+    print('Breed: ${dogData['breed']}');
+    print('Liked: ${direction == CardSwiperDirection.right}');
+    
+    // perform the action (match or reject)
+    bool isLiked = direction == CardSwiperDirection.right;
     if (isLiked) {
-      await matchDog(dogDoc); // Match the dog if liked
+      await matchDog(dogDoc);
     } else {
-      await rejectDog(dogDoc); // Reject the dog if disliked
+      await rejectDog(dogDoc);
     }
 
+    // adjust the current index to next card in list
     setState(() {
-      dogs.removeAt(index); // Remove the swiped dog
+      if (_currentIndex < widget.dogs.length - 1) {
+        _currentIndex++;
+      }
     });
 
-    // Fetch more dogs if the list is empty
-    if (dogs.isEmpty) {
-      fetchDogs();
-    }
+    // debug- log the current index after swipe
+    print('New current index after swipe: $_currentIndex');
   }
 
   @override
@@ -97,24 +92,29 @@ class _ExampleState extends State<Example> with TickerProviderStateMixin {
       appBar: AppBar(title: Text("PlayPaws Match")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: dogs.isEmpty
-            ? Center(child: CircularProgressIndicator()) // Show loading indicator if no dogs
+        child: widget.dogs.isEmpty
+            ? Center(child: CircularProgressIndicator())
             : CardSwiper(
                 controller: _swiperController,
-                cardsCount: dogs.length,
-                onSwipeDirectionChange: (previousDirection, currentDirection) {
-                  int currentIndex = dogs.length - 1; // Get the index of the top card
-                  onSwipe(currentIndex, currentDirection); // Call onSwipe with current index and direction
-                },
-                onUndo: (previousIndex, currentIndex, direction) {
-                  debugPrint('Card $currentIndex was undone from ${direction.name}');
+                cardsCount: widget.dogs.length,
+                onSwipe: (previousIndex, currentIndex, direction) {
+                  if (previousIndex != null) {
+                    // debug: log swipe action
+                    print('Swiped card at index: $previousIndex, direction: $direction');
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      onSwipeAction(previousIndex, direction);
+                    });
+                  }
                   return true;
                 },
                 cardBuilder: (context, index, _, __) {
-                  return DogCard(dogDoc: dogs[index]);
+                  // check if the current index is still within the list
+                  return index >= _currentIndex
+                      ? DogCard(dogDoc: widget.dogs[index])
+                      : Container(); // Hide cards that are not in view
                 },
-                numberOfCardsDisplayed: 3, // Display 3 cards at a time
-                backCardOffset: Offset(40, 40),
+                numberOfCardsDisplayed: 2, // fewer cards to prevent overflow
+                backCardOffset: Offset(0, 10), // adjust for card positioning
                 padding: EdgeInsets.all(24.0),
               ),
       ),
@@ -123,8 +123,12 @@ class _ExampleState extends State<Example> with TickerProviderStateMixin {
 }
 
 
+
+
+
 class DogCard extends StatelessWidget {
   final QueryDocumentSnapshot dogDoc;
+
   const DogCard({Key? key, required this.dogDoc}) : super(key: key);
 
   @override
@@ -134,41 +138,46 @@ class DogCard extends StatelessWidget {
     return Card(
       elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              dogData["dogPictureURL"] ??
-                  "https://www.ohio.edu/sites/default/files/styles/max_650x650/public/2025-03/Image.jpeg?itok=hc0EF56Z",
-              width: 300,
-              height: 300,
-              fit: BoxFit.cover,
+      child: Container(
+        height: double.infinity, // Ensures the Card takes max height it can
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  dogData["dogPictureURL"] ??
+                      "https://www.ohio.edu/sites/default/files/styles/max_650x650/public/2025-03/Image.jpeg?itok=hc0EF56Z",
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
-          ),
-          SizedBox(height: 12),
-          Text(
-            dogData["name"] ?? "No name",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 6),
-          Text(
-            dogData["breed"] ?? "Unknown breed",
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              dogData["name"] ?? "No name",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              dogData["breed"] ?? "Unknown breed",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
+
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final matchData = db.collection('matches');
   DocumentReference dogRef = dogDoc.reference;
   DocumentReference currentDogRef = db.collection('dogs').doc(dog_id);
-
+  print('Matched:${dogRef}, ${currentDogRef}');
   QuerySnapshot matchSnapshot = await matchData
       .where("dog1", isEqualTo: dogRef)
       .where("dog2", isEqualTo: currentDogRef)
@@ -178,8 +187,8 @@ Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
   if (matchSnapshot.docs.isEmpty) {
     await matchData.add({
       "createdOn": FieldValue.serverTimestamp(),
-      "dog1": dogRef,
-      "dog2": currentDogRef,
+      "dog1": currentDogRef,
+      "dog2": dogRef,
       "status": "Pending",
     });
   } else {
@@ -194,7 +203,7 @@ Future<void> rejectDog(QueryDocumentSnapshot dogDoc) async {
   final matchData = db.collection('matches');
   DocumentReference dogRef = dogDoc.reference;
   DocumentReference currentDogRef = db.collection('dogs').doc(dog_id);
-
+  print('Rejected:${dogRef}, ${currentDogRef}');
   await matchData.add({
     "createdOn": FieldValue.serverTimestamp(),
     "dog1": currentDogRef,
@@ -488,7 +497,7 @@ Future<void> rejectDog(QueryDocumentSnapshot dogDoc) async {
 //           }
 
 //           snapshot.data!.forEach((dogDoc) {
-//             print(dogDoc.data()); // Print the document data to see all available fields
+//             (dogDoc.data())print; // Print the document data to see all available fields
 //           });
 
 //           List<Container> cards = snapshot.data!.map((dogDoc) {
