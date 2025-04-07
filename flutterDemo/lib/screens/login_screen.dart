@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'navigation_bar.dart';
-import 'profile_ui.dart';
+//import 'profile_ui.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -63,7 +63,7 @@ class LoginScreenState extends State<LoginScreen> {
                   if (!context.mounted) return;
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen()),
+                    MaterialPageRoute(builder: (context) => NavigationExample()),
                   );
                 } else {
                   debugPrint("Login failed.");
