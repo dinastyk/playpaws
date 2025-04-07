@@ -42,6 +42,11 @@ dependencies:
   flutter_swipable: 
   faker: ^2.1.0
   google_fonts: ^4.0.0
+  carousel_slider:
+    git:
+      url: https://github.com/sampaio96/flutter_carousel_slider.git
+      ref: master
+
 
 dev_dependencies:
   flutter_test:

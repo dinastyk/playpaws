@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide CarouselController;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 void main() {
   runApp(const PlayPawsProfile());
@@ -38,6 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String energyLevel = "Loading...";
   List<String> personalityTraits = [];
   String profilePictureURL = "";
+  List<String> dogPictures = [];
 
   @override
   void initState() {
@@ -47,40 +49,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _fetchProfileData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    debugPrint("🧪 Firebase UID: $uid");
+    if (uid == null) return;
 
-    if (uid == null) {
-      debugPrint("🚨 UID is null — user not logged in?");
-      return;
-    }
-
-    // Step 1: Query Firestore for the user document with matching UID
     final userQuery = await _firestore
         .collection('users')
         .where('uid', isEqualTo: uid)
         .limit(1)
         .get();
 
-    if (userQuery.docs.isEmpty) {
-      debugPrint("🚨 No user found for UID: $uid");
-      return;
-    }
+    if (userQuery.docs.isEmpty) return;
 
     final userSnapshot = userQuery.docs.first;
     final userData = userSnapshot.data();
-    debugPrint("✅ User data: $userData");
-
-    // 🔥 Updated for DocumentReference
     final DocumentReference dogRef = userData['dog'];
     final dogSnapshot = await dogRef.get();
 
-    if (!dogSnapshot.exists) {
-      debugPrint("🚨 Dog document not found at ref: $dogRef");
-      return;
-    }
+    if (!dogSnapshot.exists) return;
 
     final dogData = dogSnapshot.data() as Map<String, dynamic>;
-    debugPrint("✅ Dog data: $dogData");
 
     setState(() {
       ownerName = userData['name'];
@@ -91,9 +77,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       weight = dogData['weight'].toDouble();
       energyLevel = dogData['energyLevel'];
       personalityTraits = List<String>.from(dogData['personality']);
+      dogPictures = List<String>.from(dogData['dogPictures'] ?? []);
     });
   }
 
+  void _openFullScreenImage(String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FullScreenImageView(imageUrl: imageUrl),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,86 +97,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text("PlayPaws Profile"),
         backgroundColor: const Color(0xFF1A69C6),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD1E4FF),
-                    borderRadius: BorderRadius.circular(10),
-                    image: profilePictureURL.isNotEmpty
-                        ? DecorationImage(
-                            image: NetworkImage(profilePictureURL),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: profilePictureURL.isEmpty
-                      ? const Center(child: Text("No Photo"))
-                      : null,
-                ),
-                const SizedBox(width: 16),
-                // 👇 Wrap this in Flexible
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Owner: $ownerName",
-                        style: Theme.of(context).textTheme.titleMedium,
-                        overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD1E4FF),
+                        borderRadius: BorderRadius.circular(10),
+                        image: profilePictureURL.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(profilePictureURL),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                      Text(
-                        "Dog: $dogName",
-                        style: Theme.of(context).textTheme.titleMedium,
-                        overflow: TextOverflow.ellipsis,
+                      child: profilePictureURL.isEmpty
+                          ? const Center(child: Text("No Photo"))
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Owner: $ownerName",
+                              style:
+                                  Theme.of(context).textTheme.titleMedium,
+                              overflow: TextOverflow.ellipsis),
+                          Text("Dog: $dogName",
+                              style:
+                                  Theme.of(context).textTheme.titleMedium,
+                              overflow: TextOverflow.ellipsis),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 16),
+                const Text("All Photos"),
+                dogPictures.isNotEmpty
+                    ? CarouselSlider(
+                        options: CarouselOptions(
+                          height: 300,
+                          enlargeCenterPage: true,
+                          enableInfiniteScroll: true,
+                          viewportFraction: 0.5,
+                        ),
+                        items: dogPictures.map((url) {
+                          return Builder(
+                            builder: (BuildContext context) {
+                              return GestureDetector(
+                                onTap: () => _openFullScreenImage(url),
+                                child: Container(
+                                  width: 150,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 3.0),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    image: DecorationImage(
+                                      image: NetworkImage(url),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }).toList(),
+                      )
+                    : Row(
+                        children: List.generate(
+                          4,
+                          (index) => Container(
+                            margin: const EdgeInsets.all(4.0),
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD1E4FF),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child:
+                                const Center(child: Icon(Icons.photo_outlined)),
+                          ),
+                        ),
+                      ),
+                const SizedBox(height: 16),
+                _buildInfoField("Breed", breed),
+                _buildInfoField("Age", "$age years"),
+                _buildInfoField("Weight", "$weight kg"),
+                _buildInfoField("Energy Level", energyLevel),
+                _buildInfoField(
+                    "Personality Traits", personalityTraits.join(", ")),
               ],
             ),
-
-            const SizedBox(height: 16),
-            const Text("All Photos"),
-            Row(
-              children: List.generate(
-                4,
-                (index) => Container(
-                  margin: const EdgeInsets.all(4.0),
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD1E4FF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(child: Icon(Icons.photo_outlined)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoField("Breed", breed),
-            _buildInfoField("Age", "$age years"),
-            _buildInfoField("Weight", "$weight kg"),
-            _buildInfoField("Energy Level", energyLevel),
-            _buildInfoField("Personality Traits", personalityTraits.join(", ")), 
-            
-            const Spacer(),
-            ElevatedButton(
+          ),
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF9874),
               ),
               child: const Text("Edit Profile"),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -192,16 +221,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "$label:",
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
+          Text("$label:",
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          Text(value, style: Theme.of(context).textTheme.bodyLarge),
         ],
+      ),
+    );
+  }
+}
+
+class FullScreenImageView extends StatelessWidget {
+  final String imageUrl;
+  const FullScreenImageView({super.key, required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text("Photo"),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.network(imageUrl),
+        ),
       ),
     );
   }
