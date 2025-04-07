@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'navigation_bar.dart';
+import 'profile_ui.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key}); //added key param
@@ -16,7 +17,7 @@ class LoginScreenState extends State<LoginScreen> {
   @override //Everything below @override deals with UI design, everything above is functionality and app behavior
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Login")),
+      backgroundColor: Color(0xFFD1E4FF),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -33,6 +34,9 @@ class LoginScreenState extends State<LoginScreen> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
+              style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.all(Color(0xFFFF9874)),
+                  foregroundColor: WidgetStateProperty.all(Colors.white)),
               onPressed: () async {
                 String email = emailController.text;
                 String password = passwordController.text;
@@ -46,7 +50,7 @@ class LoginScreenState extends State<LoginScreen> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => NavigationExample()),
+                        builder: (context) => ProfileScreen()),
                   );
                 } else {
                   debugPrint("Login failed.");
@@ -64,6 +68,9 @@ class LoginScreenState extends State<LoginScreen> {
             ),
             SizedBox(height: 10),
             ElevatedButton(
+              style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.all(Color(0xFFFF9874)),
+                  foregroundColor: WidgetStateProperty.all(Colors.white)),
               onPressed: () async {
                 var user = await authService.signInWithGoogle();
                 if (user != null) {
