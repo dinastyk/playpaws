@@ -4,6 +4,48 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 final dog_id = "dogId1";
 
+Future<String> getBreed(DocumentReference docRef) async {
+  try {
+    DocumentSnapshot docSnapshot = await docRef.get();
+    if (docSnapshot.exists) {
+      return docSnapshot.get('breed');
+    }
+  } catch (e) {
+    print('Error fetching document: $e');
+  }
+  return "";
+}
+
+Future<List<QueryDocumentSnapshot>> sortDogs(
+    Future<List<QueryDocumentSnapshot>> filteredDogsFuture) async {
+  final FirebaseFirestore db = FirebaseFirestore.instance;
+
+  // get current dog's breed
+  final currentBreed = await getBreed(db.collection("dogs").doc(dog_id));
+  if (currentBreed=="")
+  {
+    return filteredDogsFuture;
+  }
+  // get compatibility scores for the current breed
+  final scoresDoc =
+      await db.collection("dog_breeds").doc(currentBreed).get();
+  Map<String, dynamic> scoresMap = scoresDoc.get("compatibility_scores");
+
+  // get the list of dogs to compare
+  final filteredDogs = await filteredDogsFuture;
+
+  final pairs = filteredDogs.map((dog) {
+    final otherBreed = dog.get('breed');
+    final score = (scoresMap[otherBreed] ?? 0).toDouble();
+    return MapEntry(dog, score);
+  }).toList();
+
+  // sort by score descending
+  pairs.sort((a, b) => b.value.compareTo(a.value));
+
+  // extract sorted dog snapshots
+  return pairs.map((e) => e.key as QueryDocumentSnapshot).toList();
+}
 Future<List<QueryDocumentSnapshot>> getDogs() async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final dogData = db.collection("dogs");
@@ -12,28 +54,28 @@ Future<List<QueryDocumentSnapshot>> getDogs() async {
 
   Set<DocumentReference> interactedDogs = {};
 
-  // Step 1: Get matches where current dog is `dog1` (already swiped)
+  // get matches where currentDog is dog1 // means dog1 either already swiped right or left on dog
   QuerySnapshot matchSnapshot1 = await matchData
       .where("dog1", isEqualTo: dogRef)
       .get();
 
   for (var doc in matchSnapshot1.docs) {
     DocumentReference matchedDogRef = doc["dog2"] as DocumentReference;
-    interactedDogs.add(matchedDogRef); // Exclude all dogs dog1 swiped on
+    interactedDogs.add(matchedDogRef); // exlcude all dogs dog1 swiped on
   }
 
-  // Step 2: Get matches where current dog is `dog2` AND status = "Accepted"
+  // get matches where current dog is dog2 and status is accepted/ means current dog is already matched to that dog
   QuerySnapshot matchSnapshot2 = await matchData
       .where("dog2", isEqualTo: dogRef)
-      .where("status", isEqualTo: "Accepted") // Only remove accepted matches
+      .where("status", isEqualTo: "Accepted") 
       .get();
 
   for (var doc in matchSnapshot2.docs) {
     DocumentReference matchedDogRef = doc["dog1"] as DocumentReference;
-    interactedDogs.add(matchedDogRef); // Remove accepted matches
+    interactedDogs.add(matchedDogRef); // add accepted matches to interacted with dogs set
   }
 
-  // Step 3: Get all dogs and remove interacted ones
+  //get all dogs in firestore and remove interacted with dogs plus dog itself
   QuerySnapshot dogSnapshot = await dogData.get();
   List<QueryDocumentSnapshot> filteredDogs = [];
 
@@ -43,7 +85,7 @@ Future<List<QueryDocumentSnapshot>> getDogs() async {
     }
   }
 
-  return filteredDogs;
+ return sortDogs(Future.value(filteredDogs)); // pass to sortDogs function to sort based on dog breed compatibility
 }
 class CardSwipe extends StatefulWidget {
   final List<QueryDocumentSnapshot> dogs;
@@ -75,7 +117,7 @@ class CardSwipe extends StatefulWidget {
       await rejectDog(dogDoc);
     }
 
-    // adjust the current index to next card in list
+    // adjust the current index to next card in list // had problem when i was removing based on index was removing next index so changed it to this
     setState(() {
       if (_currentIndex < widget.dogs.length - 1) {
         _currentIndex++;
@@ -111,9 +153,9 @@ class CardSwipe extends StatefulWidget {
                   // check if the current index is still within the list
                   return index >= _currentIndex
                       ? DogCard(dogDoc: widget.dogs[index])
-                      : Container(); // Hide cards that are not in view
+                      : Container(); // hide cards that are not in view
                 },
-                numberOfCardsDisplayed: 2, // fewer cards to prevent overflow
+                numberOfCardsDisplayed: 2, // fewer cards to prevent overflow in UI
                 backCardOffset: Offset(0, 10), // adjust for card positioning
                 padding: EdgeInsets.all(24.0),
               ),
@@ -139,7 +181,7 @@ class DogCard extends StatelessWidget {
       elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        height: double.infinity, // Ensures the Card takes max height it can
+        height: double.infinity, // Card takes max height it can
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
@@ -147,7 +189,7 @@ class DogCard extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.network(
-                  dogData["dogPictureURL"] ??
+                  dogData["dogPictureURL"] ?? //either gets dog url from db or random one i found
                       "https://www.ohio.edu/sites/default/files/styles/max_650x650/public/2025-03/Image.jpeg?itok=hc0EF56Z",
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -177,14 +219,14 @@ Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
   final matchData = db.collection('matches');
   DocumentReference dogRef = dogDoc.reference;
   DocumentReference currentDogRef = db.collection('dogs').doc(dog_id);
-  print('Matched:${dogRef}, ${currentDogRef}');
-  QuerySnapshot matchSnapshot = await matchData
+  print('Matched:${dogRef}, ${currentDogRef}'); //debug print dog and current dog
+  QuerySnapshot matchSnapshot = await matchData //get match data where dog 2 is current dog and pending
       .where("dog1", isEqualTo: dogRef)
       .where("dog2", isEqualTo: currentDogRef)
       .where("status", isEqualTo: "Pending")
       .get();
 
-  if (matchSnapshot.docs.isEmpty) {
+  if (matchSnapshot.docs.isEmpty) { //if is empty, this didnt't exist create new match doc with dog1 is current dog, dog2 is matched dog
     await matchData.add({
       "createdOn": FieldValue.serverTimestamp(),
       "dog1": currentDogRef,
@@ -193,7 +235,7 @@ Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
     });
   } else {
     for (var doc in matchSnapshot.docs) {
-      await matchData.doc(doc.id).update({"status": "Accepted"});
+      await matchData.doc(doc.id).update({"status": "Accepted"});  //if does exist change pending to accepted
     }
   }
 }
@@ -203,7 +245,7 @@ Future<void> rejectDog(QueryDocumentSnapshot dogDoc) async {
   final matchData = db.collection('matches');
   DocumentReference dogRef = dogDoc.reference;
   DocumentReference currentDogRef = db.collection('dogs').doc(dog_id);
-  print('Rejected:${dogRef}, ${currentDogRef}');
+  print('Rejected:${dogRef}, ${currentDogRef}'); //create match doc with dog1 is current dog, dog2 is rejected dog, status is rejected
   await matchData.add({
     "createdOn": FieldValue.serverTimestamp(),
     "dog1": currentDogRef,

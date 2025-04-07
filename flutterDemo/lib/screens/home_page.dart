@@ -16,16 +16,16 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    fetchDogs(); // Fetch the dog data when the page is loaded
+    fetchDogs(); // fetch the dog data when the page is loaded
   }
 
-  // Fetch dogs from the database or API
+  // fetch dogs from the db
   Future<void> fetchDogs() async {
     setState(() {
       isLoading = true;
     });
 
-    // Call getDogs to fetch the list of dogs from Firestore
+    // call getDogs to fetch the list of dogs from Firestore
     List<QueryDocumentSnapshot> fetchedDogs = await getDogs();
     
     setState(() {
@@ -42,8 +42,8 @@ class _HomePageState extends State<HomePage> {
         children: [
           Expanded(
             child: isLoading
-                ? Center(child: CircularProgressIndicator()) // Show loading indicator if no dogs are available
-                : CardSwipe(dogs: dogs), // Pass the dogs data to your CardSwipe widget
+                ? Center(child: CircularProgressIndicator()) // show loading indicator if no dogs are available
+                : CardSwipe(dogs: dogs), // pass the dogs data to CardSwipe
           ),
         ],
       ),

@@ -58,6 +58,9 @@ class _NavigationExampleState extends State<NavigationExample> {
         onDestinationSelected: (int index) {
           setState(() {
             currentPageIndex = index;
+            // if (index==0){
+            //   HomePage().fetchDogs();
+            // }
           });
         },
         indicatorColor: Colors.amber,
