@@ -3,6 +3,8 @@ import 'package:flutter/material.dart' hide CarouselController;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:playpaws_test/screens/login_screen.dart';
+import 'settings_page.dart';
 
 void main() {
   runApp(const PlayPawsProfile());
@@ -92,10 +94,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const backgroundColor = Color(0xFFD1E4FF);
+    const buttonColor = Color(0xFFFF9874);
+
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text("PlayPaws Profile"),
-        backgroundColor: const Color(0xFF1A69C6),
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: buttonColor),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
+            );
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: buttonColor),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -110,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD1E4FF),
+                        color: backgroundColor,
                         borderRadius: BorderRadius.circular(10),
                         image: profilePictureURL.isNotEmpty
                             ? DecorationImage(
@@ -129,12 +158,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text("Owner: $ownerName",
-                              style:
-                                  Theme.of(context).textTheme.titleMedium,
+                              style: Theme.of(context).textTheme.titleMedium,
                               overflow: TextOverflow.ellipsis),
                           Text("Dog: $dogName",
-                              style:
-                                  Theme.of(context).textTheme.titleMedium,
+                              style: Theme.of(context).textTheme.titleMedium,
                               overflow: TextOverflow.ellipsis),
                         ],
                       ),
@@ -158,8 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: () => _openFullScreenImage(url),
                                 child: Container(
                                   width: 150,
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 3.0),
+                                  margin: const EdgeInsets.symmetric(horizontal: 3.0),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(8),
                                     image: DecorationImage(
@@ -181,11 +207,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD1E4FF),
+                              color: backgroundColor,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child:
-                                const Center(child: Icon(Icons.photo_outlined)),
+                            child: const Center(child: Icon(Icons.photo_outlined)),
                           ),
                         ),
                       ),
@@ -194,8 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildInfoField("Age", "$age years"),
                 _buildInfoField("Weight", "$weight kg"),
                 _buildInfoField("Energy Level", energyLevel),
-                _buildInfoField(
-                    "Personality Traits", personalityTraits.join(", ")),
+                _buildInfoField("Personality Traits", personalityTraits.join(", ")),
               ],
             ),
           ),
@@ -205,7 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF9874),
+                backgroundColor: buttonColor,
               ),
               child: const Text("Edit Profile"),
             ),
@@ -221,11 +245,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("$label:",
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            "$label:",
+            style: Theme.of(context)
+                .textTheme
+                .bodyLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
           Text(value, style: Theme.of(context).textTheme.bodyLarge),
         ],
