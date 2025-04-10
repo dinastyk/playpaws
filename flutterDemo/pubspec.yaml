@@ -45,6 +45,11 @@ dependencies:
   intl: ^0.18.1 #for the calendar to convert the dates into readable versions for the app
   flutter_card_swiper: 
   google_fonts: ^4.0.0
+  carousel_slider:
+    git:
+      url: https://github.com/sampaio96/flutter_carousel_slider.git
+      ref: master
+
 
 dev_dependencies:
   flutter_test:
@@ -69,9 +74,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
