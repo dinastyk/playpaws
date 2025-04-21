@@ -17,6 +17,9 @@ class ChatsPage extends StatelessWidget
         body: Center(child: Text('Please log in to view chats')),
       );
     }
+
+    final userRef = FirebaseFirestore.instance.doc("users/${user.uid}");
+
     return Scaffold
     (
       appBar: AppBar(title: const Text("Your Chats")),
@@ -24,14 +27,17 @@ class ChatsPage extends StatelessWidget
       (
         stream: FirebaseFirestore.instance
         .collection("chats")
-        .where("users", arrayContains: user.uid)
-        .orderBy("createdOn", descending: true)
+        .where("participants", arrayContains: userRef)
+        .orderBy("createdAt", descending: true)
         .snapshots(),
         builder: (context, snapshot)
         {
           if (snapshot.hasError)
           {
-            return const Center(child: Text("Error Loading Chats"));
+            return Center(child: Text("Error: ${snapshot.error} "));
+            //print("Error: ${snapshot.error}");
+            //print("${snapshot.error}");
+            
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
           {
@@ -45,10 +51,48 @@ class ChatsPage extends StatelessWidget
             itemBuilder: (context, index)
             {
               final chat = chats[index];
-              final users = List<String>.from(chat['users']);
-              final otherUserID = users.firstWhere((uid) => uid != user.uid);
-              final chatID = chat.id;
+              final participants = List<DocumentReference>.from(chat['participants']);
+              final otherUserRef = participants.firstWhere((ref) => ref.id != user.uid);
 
+              return FutureBuilder
+              (
+                future: otherUserRef.get(),
+                builder: (context, snapshot)
+                {
+                  //final displayName = snapshot.hasData ? (snapshot.data!.data() as Map<String, dynamic>)['username'] ?? otherUserRef.id : otherUserRef.id;
+
+                  String displayName = otherUserRef.id;
+                  if (snapshot.hasData && snapshot.data!.exists)
+                  {
+                    final data = snapshot.data!.data() as Map<String, dynamic>?;
+                    if (data != null && data['username'] != null) 
+                    {
+                      displayName = data['username'];
+                    }
+                  }
+
+
+                  return ListTile
+                  (
+                    title: Text("Chat with $displayName"),
+                    subtitle: Text(chat['lastMessage'] ?? 'Tap to chat'),
+                    onTap: ()
+                    {
+                      Navigator.push(context, 
+                      MaterialPageRoute(builder: (_) => MessagesPage(receiverID: otherUserRef.id),),);
+                    }
+                  );
+                }
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+              //final chatID = chat.id;
+/*
               return ListTile
               (
                 title: Text("Chat with: $otherUserID"),
@@ -68,3 +112,4 @@ class ChatsPage extends StatelessWidget
     );
   }
 }
+*/

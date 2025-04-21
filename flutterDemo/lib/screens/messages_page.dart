@@ -33,7 +33,10 @@ class MessagesPageState extends State<MessagesPage>
     //chatID = user!.uid.hashCode != receiverID.hashCode 
     //? "${user!.uid}_$receiverID"
     //: "${receiverID}_${user!.uid}";
-    receiverID = widget.receiverID;
+    
+    
+    //receiverID = widget.receiverID;
+    receiverID = 'ounIJ5GiN1aUKc11nIPJfv6TPHE2'; //testing
     List<String> ids = [user!.uid, receiverID];
     ids.sort();
     chatID = ids.join("_"); 
@@ -54,7 +57,57 @@ class MessagesPageState extends State<MessagesPage>
     _messageController.dispose();
     super.dispose();
   }
+
+  void sendMessage() async 
+  {
+  if (user == null) 
+  {
+    print('User not authenticated!');
+    return;
+  }
+
+  final messageText = _messageController.text.trim();
+  if (messageText.isEmpty) return;
+
+  final chatDocRef = _firestore.collection('chats').doc(chatID);
+
+  final chatSnapshot = await chatDocRef.get();
+
+  if (!chatSnapshot.exists) 
+  {
+    // Create chat document with participants and timestamp
+    final userRef = _firestore.collection('users').doc(user!.uid);
+    final receiverRef = _firestore.collection('users').doc(receiverID);
+    
+    await chatDocRef.set
+    ({
+      'participants': [userRef, receiverRef],
+      'createdAt': FieldValue.serverTimestamp(),
+      'lastMessage': messageText,
+    });
+  } 
+  else 
+  {
+    // Update lastMessage
+    await chatDocRef.update
+    ({
+      'lastMessage': messageText,
+    });
+  }
+
+  // Add message to messages subcollection
+  await chatDocRef.collection('messages').add
+  ({
+    'receiverID': receiverID,
+    'senderID': user!.uid,
+    'text': messageText,
+    'timestamp': FieldValue.serverTimestamp(),
+  });
+
+  _messageController.clear();
+}
   
+  /*
   void sendMessage() async
   {
     if (user == null)
@@ -74,6 +127,7 @@ class MessagesPageState extends State<MessagesPage>
       _messageController.clear();
     }
   }
+  */
 
   @override
   Widget build(BuildContext context)
