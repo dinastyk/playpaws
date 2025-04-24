@@ -250,19 +250,48 @@ Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
       .where("status", isEqualTo: "Pending")
       .get();
 
-  if (matchSnapshot.docs.isEmpty) { //if is empty, this didnt't exist create new match doc with dog1 is current dog, dog2 is matched dog
+  if (matchSnapshot.docs.isEmpty) 
+  { //if is empty, this didnt't exist create new match doc with dog1 is current dog, dog2 is matched dog
     await matchData.add({
       "createdOn": FieldValue.serverTimestamp(),
       "dog1": currentDogRef,
       "dog2": dogRef,
       "status": "Pending",
     });
-  } else {
-    for (var doc in matchSnapshot.docs) {
+  } 
+  else 
+  {
+    for (var doc in matchSnapshot.docs) 
+    {
       await matchData.doc(doc.id).update({"status": "Accepted"});  //if does exist change pending to accepted
+
+      var dog1Snapshot = await currentDogRef.get();
+      var dog2Snapshot = await dogRef.get();
+      String user1 = dog1Snapshot.get('owner');
+      String user2 = dog2Snapshot.get('owner');
+      List<String> ids = [user1, user2];
+      ids.sort();
+      String chatID = ids.join("-");
+      DocumentReference chatDoc = FirebaseFirestore.instance.collection('chats').doc(chatID);
+      DocumentSnapshot chatSnapshot = await chatDoc.get();
+
+      if (!chatSnapshot.exists) 
+      {
+        await chatDoc.set({
+        "users": ids,
+        "dog1": currentDogRef,
+        "dog2": dogRef,
+        "createdOn": FieldValue.serverTimestamp(),
+        });
+      }
+
+       final userData = FirebaseFirestore.instance.collection("users");
+       await userData.doc(user1).update({"matchedUsers": FieldValue.arrayUnion([user2])});
+       await userData.doc(user2).update({"matchedUsers": FieldValue.arrayUnion([user1])});
     }
   }
 }
+
 
 Future<void> rejectDog(QueryDocumentSnapshot dogDoc) async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
