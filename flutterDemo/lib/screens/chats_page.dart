@@ -52,8 +52,13 @@ class ChatsPage extends StatelessWidget
             {
               final chat = chats[index];
               final participants = List<DocumentReference>.from(chat['participants']);
-              final otherUserRef = participants.firstWhere((ref) => ref.id != user.uid);
-
+              final otherParticipants = participants.where((ref) => ref.id != user.uid).toList();
+              if (otherParticipants.isEmpty) 
+              {
+                return const SizedBox.shrink();
+              }
+              final otherUserRef = otherParticipants.first;
+              
               return FutureBuilder
               (
                 future: otherUserRef.get(),
