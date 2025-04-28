@@ -105,12 +105,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: buttonColor),
-          onPressed: () {
-            Navigator.push(
+          onPressed: () 
+          {
+            Navigator.pop(context);
+          }
+          /*
+          {
+            Navigator.push
+            (
               context,
               MaterialPageRoute(builder: (context) => const SettingsPage()),
             );
           },
+          */
         ),
         actions: [
           IconButton(
