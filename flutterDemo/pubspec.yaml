@@ -50,6 +50,7 @@ dependencies:
       url: https://github.com/sampaio96/flutter_carousel_slider.git
       ref: master
   http:
+  confetti: ^0.7.0
 
 dev_dependencies:
   flutter_test:

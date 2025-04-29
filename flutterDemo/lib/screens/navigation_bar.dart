@@ -45,12 +45,13 @@ class _NavigationExampleState extends State<NavigationExample> {
 
   final List<Widget> pages = [
     const HomePage(),
-    const NotificationsPage(),
+    // const NotificationsPage(),
     const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
-    const SettingsPage(),
-    const CalendarScreen(), // Added new Calendar Page
-    const DebugScreen(),
     const ChatsPage(),
+    const CalendarScreen(), // Added new Calendar Page
+    const SettingsPage(),
+    // const DebugScreen(),
+
   ];
 
   @override
@@ -66,7 +67,7 @@ class _NavigationExampleState extends State<NavigationExample> {
             // }
           });
         },
-        indicatorColor: Colors.amber,
+        indicatorColor: Colors.orange,
         selectedIndex: currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(
@@ -74,30 +75,31 @@ class _NavigationExampleState extends State<NavigationExample> {
             icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.notifications_sharp)),
-            label: 'Notifications',
-          ),
+          // NavigationDestination(
+          //   icon: Badge(child: Icon(Icons.notifications_sharp)),
+          //   label: 'Notifications',
+          // ),
           NavigationDestination(
             icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
             label: 'Messages',
-          ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.settings_sharp)),
-            label: 'Settings',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_today), // Calendar icon
-            label: 'Calendar',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bug_report),
-            label: 'Debug',
           ),
           NavigationDestination
           (
             icon: Icon(Icons.chat_bubble), label: 'Chats',
           ),
+                    NavigationDestination(
+            icon: Icon(Icons.calendar_today), // Calendar icon
+            label: 'Calendar',
+          ),
+          NavigationDestination(
+            icon: Badge(child: Icon(Icons.settings_sharp)),
+            label: 'Settings',
+          ),
+
+          // NavigationDestination(
+          //   icon: Icon(Icons.bug_report),
+          //   label: 'Debug',
+          // ),
         ],
       ),
     );
