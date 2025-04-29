@@ -3,6 +3,35 @@ import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'dart:math';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+
+import 'dart:math';
+
+// Function to calculate cosine similarity between two vectors
+double cosineSimilarity(List<double> vectorA, List<double> vectorB) {
+  if (vectorA.length != vectorB.length) {
+    throw ArgumentError('Vectors must be the same length');
+  }
+
+  double dotProduct = 0;
+  double magnitudeA = 0;
+  double magnitudeB = 0;
+
+  for (int i = 0; i < vectorA.length; i++) {
+    dotProduct += vectorA[i] * vectorB[i];
+    magnitudeA += pow(vectorA[i], 2);
+    magnitudeB += pow(vectorB[i], 2);
+  }
+
+  if (magnitudeA == 0 || magnitudeB == 0) {
+    return 0.0; // to avoid division by zero
+  }
+
+  return dotProduct / (sqrt(magnitudeA) * sqrt(magnitudeB));
+}
 
 Future<DocumentReference?> getDogID() async {
   final FirebaseFirestore database = FirebaseFirestore.instance;
@@ -36,32 +65,238 @@ Future<String> getBreed(DocumentReference docRef) async {
   return "";
 }
 
+// Future<List<QueryDocumentSnapshot>> sortDogs(
+//     Future<List<QueryDocumentSnapshot>> filteredDogsFuture,
+//     DocumentReference dogRef) async {
+//   final FirebaseFirestore db = FirebaseFirestore.instance;
+
+//   final currentBreed = await getBreed(dogRef);
+//   if (currentBreed == "") {
+//     return filteredDogsFuture;
+//   }
+
+//   final scoresDoc =
+//       await db.collection("dog_breeds").doc(currentBreed).get();
+//   Map<String, dynamic> scoresMap = scoresDoc.get("compatibility_scores");
+
+//   final filteredDogs = await filteredDogsFuture;
+
+//   final pairs = filteredDogs.map((dog) {
+//     final otherBreed = dog.get('breed');
+//     final score = (scoresMap[otherBreed] ?? 0).toDouble();
+//     return MapEntry(dog, score);
+//   }).toList();
+
+//   pairs.sort((a, b) => b.value.compareTo(a.value));
+
+//   return pairs.map((e) => e.key).toList();
+// }
+// Function to get current user's cosineSimilarities from Firestore
+// Future<Map<DocumentReference, double>> getUserCosineSimilarities() async {
+//   final FirebaseFirestore db = FirebaseFirestore.instance;
+//   final User? user = FirebaseAuth.instance.currentUser;
+
+//   if (user == null) return {}; // Return empty map if no user is logged in
+
+//   // Query to find the document where uid field matches the current user's UID
+//   QuerySnapshot userSnapshot = await db.collection("users")
+//       .where("uid", isEqualTo: user.uid)
+//       .limit(1) // Ensure only one document is returned
+//       .get();
+
+//   if (userSnapshot.docs.isNotEmpty) {
+//     DocumentSnapshot userDoc = userSnapshot.docs.first;
+
+//     // Get the cosineSimilarities field (a map of DocumentReference to score)
+//     Map<String, dynamic> cosineSimilaritiesMap =
+//         userDoc.get('cosineSimilarities') ?? {};
+
+//     // Convert the map into a Map<DocumentReference, double>
+//     Map<DocumentReference, double> cosineSimilarities = {};
+//     cosineSimilaritiesMap.forEach((key, value) {
+//       DocumentReference dogRef = db.collection('dogs').doc(key);
+//       cosineSimilarities[dogRef] = value.toDouble();
+//     });
+
+//     return cosineSimilarities;
+//   }
+
+//   return {}; // Return empty map if user document is not found
+// }
+// Function to sort dogs based on breed compatibility and cosine similarity
 Future<List<QueryDocumentSnapshot>> sortDogs(
     Future<List<QueryDocumentSnapshot>> filteredDogsFuture,
     DocumentReference dogRef) async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
-
   final currentBreed = await getBreed(dogRef);
   if (currentBreed == "") {
-    return filteredDogsFuture;
+    return await filteredDogsFuture;
   }
 
-  final scoresDoc =
-      await db.collection("dog_breeds").doc(currentBreed).get();
+  final scoresDoc = await db.collection("dog_breeds").doc(currentBreed).get();
   Map<String, dynamic> scoresMap = scoresDoc.get("compatibility_scores");
 
   final filteredDogs = await filteredDogsFuture;
+  final User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) return [];
 
-  final pairs = filteredDogs.map((dog) {
-    final otherBreed = dog.get('breed');
-    final score = (scoresMap[otherBreed] ?? 0).toDouble();
-    return MapEntry(dog, score);
-  }).toList();
+  QuerySnapshot userSnapshot = await db.collection("users")
+      .where("uid", isEqualTo: user.uid)
+      .limit(1)
+      .get();
 
-  pairs.sort((a, b) => b.value.compareTo(a.value));
+  if (userSnapshot.docs.isNotEmpty) {
+    DocumentSnapshot userDoc = userSnapshot.docs.first;
+    Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+    // Map<String, dynamic> cosineSimilaritiesMap =
+    //     userData['cosineSimilarities'] ?? {};
+  
 
-  return pairs.map((e) => e.key).toList();
+    final preferences = userData['preferences'];
+    final weightPref = preferences['maxWeight'] ?? 0.0;
+
+    List<MapEntry<QueryDocumentSnapshot, double>> pairs = await Future.wait(
+      filteredDogs.map((dog) async {
+        var dogData = dog.data() as Map<String, dynamic>;
+        double similarity=0;
+        bool hasCosine=false;
+        final otherBreed = dog.get('breed');
+        double compatScore = (scoresMap[otherBreed] ?? 0).toDouble(); 
+
+if (userData.containsKey('userEmbedding') &&
+    dogData.containsKey('dogEmbedding') &&
+    userData['userEmbedding'] != null &&
+    dogData['dogEmbedding'] != null) {
+
+  List<dynamic> userEmbed = userData['userEmbedding'];
+  List<dynamic> dogEmbed = dogData['dogEmbedding'];
+
+  List<double> a = userEmbed.map((e) => (e as num).toDouble()).toList();
+  List<double> b = dogEmbed.map((e) => (e as num).toDouble()).toList();
+
+  similarity = cosineSimilarity(a, b);
+  hasCosine = true;
 }
+
+        // double? cosineSimilarity = cosineSimilaritiesMap[dog.reference];
+        double? dogWeight = dog.data().toString().contains('weight') ? (dog.get('weight')?.toDouble() ?? null) : null;
+
+        double? weightScore;
+        if (dogWeight != null && weightPref != 0.0) {
+          weightScore = (1 - (dogWeight - weightPref).abs() / 10).clamp(0.0, 1.0);
+        }
+
+        bool hasCompat = compatScore > 0;
+        // bool hasCosine = similarity != null;
+        bool hasWeight = weightScore != null;
+
+        double finalScore = 0.0;
+
+        if (hasCompat && hasCosine && hasWeight) {
+          finalScore = (compatScore * 0.4) + (similarity! * 0.3) + (weightScore! * 0.3);
+        } else if (!hasCosine && hasCompat && hasWeight) {
+          finalScore = (compatScore * 0.7) + (weightScore! * 0.3);
+        } else if (!hasCompat && hasCosine && hasWeight) {
+          finalScore = (similarity! * 0.65) + (weightScore! * 0.35);
+        } else if (hasCompat && hasCosine && !hasWeight) {
+          finalScore = (compatScore * 0.6) + (similarity! * 0.4);
+        } else {
+          // none of the scores exist properly, don't calculate
+          return MapEntry(dog, -1.0);  // We'll filter these out
+        }
+          print('Final Score for ${dog.id}: $finalScore');
+        return MapEntry(dog, finalScore);
+      }).toList(),
+    );
+
+    // Remove entries where final score was -1 (invalid dogs)
+    pairs.removeWhere((pair) => pair.value == -1.0);
+
+    // If no valid scoring could happen, just return original list
+    if (pairs.isEmpty) {
+      return filteredDogs;
+    }
+
+    pairs.sort((a, b) => b.value.compareTo(a.value));
+    return pairs.map((e) => e.key).toList();
+  }
+
+  return [];
+}
+
+// Future<List<QueryDocumentSnapshot>> sortDogs(
+//     Future<List<QueryDocumentSnapshot>> filteredDogsFuture,
+//     DocumentReference dogRef) async {
+//   final FirebaseFirestore db = FirebaseFirestore.instance;
+
+//   final currentBreed = await getBreed(dogRef);
+//   if (currentBreed == "") {
+//     return await filteredDogsFuture;  // Ensuring you await the future properly
+//   }
+
+//   final scoresDoc =
+//       await db.collection("dog_breeds").doc(currentBreed).get();
+//   Map<String, dynamic> scoresMap = scoresDoc.get("compatibility_scores");
+
+//   final filteredDogs = await filteredDogsFuture;
+
+//   // Get the cosine similarities map directly from the user's document
+//   final User? user = FirebaseAuth.instance.currentUser;
+//   if (user == null) return []; // Return empty list if no user is logged in
+
+//   // Query to find the document where uid field matches the current user's UID
+//   QuerySnapshot userSnapshot = await db.collection("users")
+//       .where("uid", isEqualTo: user.uid)
+//       .limit(1) // Ensure only one document is returned
+//       .get();
+
+//   if (userSnapshot.docs.isNotEmpty) {
+//     DocumentSnapshot userDoc = userSnapshot.docs.first;
+
+//     // Get the cosineSimilarities field (a map of DocumentReference to score)
+//     Map<String, dynamic> cosineSimilaritiesMap =
+//         userDoc.get('cosineSimilarities') ?? {};
+
+//     // Mapping dogs with their final scores
+//     List<MapEntry<QueryDocumentSnapshot, double>> pairs = await Future.wait(filteredDogs.map((dog) async {
+//       final otherBreed = dog.get('breed');
+//       final score = (scoresMap[otherBreed] ?? 0).toDouble();
+
+//       // Get cosine similarity score from the user's field (if available)
+//       double cosineSimilarity = cosineSimilaritiesMap[dog.reference] ?? 0.0;
+
+//       // Fetch height and weight comparison from user preferences
+//       final userData = userSnapshot.docs.first.data() as Map<String, dynamic>;
+//       final preferences = userData['preferences'];
+//       // final heightPref = preferences['maxHeight'] ?? 0.0;
+//       final weightPref = preferences['maxWeight'] ?? 0.0;
+//       // final dogHeight = dog.get('height') ?? 0.0;
+//       final dogWeight = dog.get('weight') ?? 0.0;
+
+//       // Normalize height and weight comparisons (scale between 0 and 1)
+//       // double heightScore = (1 - (dogHeight - heightPref).abs()) / 10;
+//       double weightScore = (1 - (dogWeight - weightPref).abs()) / 10;
+
+//       // Calculate final score with weights
+//       // double finalScore = (cosineSimilarity * 0.3) + (score * 0.4) +
+//       //     ((heightScore + weightScore) / 2 * 0.3);
+//             double finalScore = (cosineSimilarity * 0.3) + (score * 0.4) +
+//           (weightScore * 0.3);
+//       print('Final Score for ${dog.id}: $finalScore');
+
+//       return MapEntry(dog, finalScore);  // Returning MapEntry for sorting later
+//     }).toList());
+
+//     // Sort based on the final score
+//     pairs.sort((a, b) => b.value.compareTo(a.value));  // Sort descending
+
+//     return pairs.map((e) => e.key).toList();  // Return sorted dogs list
+//   }
+
+//   return []; // Return empty list if user document is not found
+// }
+
+
 
 Future<List<QueryDocumentSnapshot>> getDogs() async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -69,6 +304,7 @@ Future<List<QueryDocumentSnapshot>> getDogs() async {
   final matchData = db.collection("matches");
   DocumentReference? dogRef = await getDogID();
   if (dogRef == null) {
+     print("HERE");
     return []; // return empty list if user has no dog
   }
 
@@ -104,6 +340,7 @@ Future<List<QueryDocumentSnapshot>> getDogs() async {
       filteredDogs.add(dogDoc);
     }
   }
+  print('Filtered dogs count: ${filteredDogs.length}');
 
 return sortDogs(Future.value(filteredDogs), dogRef); // pass to sortDogs function to sort based on dog breed compatibility
 }
@@ -117,19 +354,17 @@ class CardSwipe extends StatefulWidget {
 }
  class _CardSwipeState extends State<CardSwipe> with TickerProviderStateMixin {
   final CardSwiperController _swiperController = CardSwiperController();
-  int _currentIndex = 0;  // track current index of the card being shown
+  int _currentIndex = 0;
 
   void onSwipeAction(int previousIndex, CardSwiperDirection direction) async {
     if (previousIndex < 0 || previousIndex >= widget.dogs.length) return;
 
-    // debug: print details of the dog being swiped
     QueryDocumentSnapshot dogDoc = widget.dogs[previousIndex];
     var dogData = dogDoc.data() as Map<String, dynamic>;
     print('Swiping on dog: ${dogData['name']}');
     print('Breed: ${dogData['breed']}');
     print('Liked: ${direction == CardSwiperDirection.right}');
-    
-    // perform the action (match or reject)
+
     bool isLiked = direction == CardSwiperDirection.right;
     if (isLiked) {
       await matchDog(dogDoc);
@@ -137,21 +372,20 @@ class CardSwipe extends StatefulWidget {
       await rejectDog(dogDoc);
     }
 
-    // adjust the current index to next card in list // had problem when i was removing based on index was removing next index so changed it to this
     setState(() {
       if (_currentIndex < widget.dogs.length - 1) {
         _currentIndex++;
       }
     });
 
-    // debug- log the current index after swipe
     print('New current index after swipe: $_currentIndex');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("PlayPaws Match")),
+      appBar: AppBar(title: Text("Find Your Pawfect Match!")),
+      backgroundColor: const Color(0xFF1A69C6),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: widget.dogs.isEmpty
@@ -161,7 +395,6 @@ class CardSwipe extends StatefulWidget {
                 cardsCount: widget.dogs.length,
                 onSwipe: (previousIndex, currentIndex, direction) {
                   if (previousIndex != null) {
-                    // debug: log swipe action
                     print('Swiped card at index: $previousIndex, direction: $direction');
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       onSwipeAction(previousIndex, direction);
@@ -170,13 +403,12 @@ class CardSwipe extends StatefulWidget {
                   return true;
                 },
                 cardBuilder: (context, index, _, __) {
-                  // check if the current index is still within the list
                   return index >= _currentIndex
                       ? DogCard(dogDoc: widget.dogs[index])
-                      : Container(); // hide cards that are not in view
+                      : Container(); 
                 },
-                numberOfCardsDisplayed: 2, // fewer cards to prevent overflow in UI
-                backCardOffset: Offset(0, 10), // adjust for card positioning
+                numberOfCardsDisplayed: 2,
+                backCardOffset: Offset(0, 10),
                 padding: EdgeInsets.all(24.0),
               ),
       ),
@@ -198,18 +430,29 @@ class DogCard extends StatelessWidget {
     var dogData = dogDoc.data() as Map<String, dynamic>;
 
     return Card(
-      elevation: 5,
+      elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: Colors.white, // Keep white for a clean look
+      shadowColor: Colors.orangeAccent, // Orange shadow for depth
       child: Container(
         height: double.infinity, // Card takes max height it can
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, Color(0xFFFFF3E0)], // subtle gradient (lighter orange)
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.network(
-                  dogData["dogPictureURL"] ?? //either gets dog url from db or random one i found
+                  dogData["dogPictureURL"] ??
                       "https://www.ohio.edu/sites/default/files/styles/max_650x650/public/2025-03/Image.jpeg?itok=hc0EF56Z",
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -219,7 +462,11 @@ class DogCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               dogData["name"] ?? "No name",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 22, 
+                fontWeight: FontWeight.bold, 
+                color: Color(0xFFEF6C00), // Orange color for name
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -232,6 +479,7 @@ class DogCard extends StatelessWidget {
     );
   }
 }
+
 
 Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
 
