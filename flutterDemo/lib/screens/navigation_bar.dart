@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:playpaws_test/screens/calendar_screen.dart';
+import 'package:playpaws_test/screens/chats_page.dart';
 import 'package:playpaws_test/screens/debug_screen.dart';
 import '../firebase_options.dart';
 import '../main.dart';
@@ -49,6 +50,7 @@ class _NavigationExampleState extends State<NavigationExample> {
     const SettingsPage(),
     const CalendarScreen(), // Added new Calendar Page
     const DebugScreen(),
+    const ChatsPage(),
   ];
 
   @override
@@ -91,6 +93,10 @@ class _NavigationExampleState extends State<NavigationExample> {
           NavigationDestination(
             icon: Icon(Icons.bug_report),
             label: 'Debug',
+          ),
+          NavigationDestination
+          (
+            icon: Icon(Icons.chat_bubble), label: 'Chats',
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -11,42 +12,93 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _selectedDay = DateTime.now();
-  DateTime _focusedDay = DateTime.now();
-  Map<DateTime, List<String>> _events = {}; // Store events for each day
+  DateTime _focusedDay = DateTime.now(); // Define _focusedDay
+  List<String> _upcomingPlaydates = [];
 
   @override
   void initState() {
     super.initState();
-    _events = {
-      DateTime.now(): ["Morning Walk", "Evening Playdate"],
-      DateTime.now().add(Duration(days: 1)): ["Vet Appointment"],
-    };
+    _loadPlaydates();
   }
 
-  void _addPlaydate() {
+  /// Fetch playdates from Firebase
+  Future<void> _loadPlaydates() async {
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('playdates').get();
+
+    List<String> upcoming = [];
+
+    for (var doc in snapshot.docs) {
+      DateTime date = (doc['date'] as Timestamp).toDate();
+      String eventDetails =
+          "${DateFormat('MMMM dd, yyyy').format(date)} - ${doc['location']}";
+
+      if (date.isAfter(DateTime.now())) {
+        upcoming.add(eventDetails);
+      }
+    }
+
+    upcoming.sort();
+    if (upcoming.length > 5) upcoming = upcoming.sublist(0, 5);
+
+    setState(() {
+      _upcomingPlaydates = upcoming;
+    });
+  }
+
+  void _showCreatePlaydateDialog() async {
+    TextEditingController locationController = TextEditingController();
+    DateTime selectedDateTime = DateTime.now();
+    String? selectedDogId; // Nullable because it starts as unselected
+
+    // Show dialog to create playdate
     showDialog(
       context: context,
-      builder: (context) {
-        TextEditingController eventController = TextEditingController();
+      builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Add Playdate"),
-          content: TextField(
-            controller: eventController,
-            decoration: InputDecoration(hintText: "Enter event name"),
+          title: Text('Create Playdate'),
+          content: Column(
+            children: [
+              TextField(
+                controller: locationController,
+                decoration: InputDecoration(labelText: 'Location'),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  // Here, set the playdate date, in this example using the selected date
+                  setState(() {
+                    selectedDateTime = DateTime.now();
+                  });
+                },
+                child: Text('Select Date'),
+              ),
+              SizedBox(height: 10),
+              Text("Selected Date: ${DateFormat('MMMM dd, yyyy').format(selectedDateTime)}"),
+            ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancel"),
-            ),
-            ElevatedButton(
               onPressed: () {
-                setState(() {
-                  _events[_selectedDay] = (_events[_selectedDay] ?? [])..add(eventController.text);
-                });
                 Navigator.pop(context);
               },
-              child: Text("Add"),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                String location = locationController.text;
+                if (location.isNotEmpty) {
+                  // Save the playdate to Firestore
+                  await FirebaseFirestore.instance.collection('playdates').add({
+                    'date': Timestamp.fromDate(selectedDateTime),
+                    'location': location,
+                  });
+                  // Refresh the playdates list
+                  _loadPlaydates();
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('Create'),
             ),
           ],
         );
@@ -57,15 +109,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Calendar')),
+      appBar: AppBar(
+        title: Text('Calendar Screen'),
+      ),
       body: Column(
         children: [
           TableCalendar(
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
-            calendarFormat: _calendarFormat,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            selectedDayPredicate: (day) {
+              return isSameDay(_selectedDay, day);
+            },
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
                 _selectedDay = selectedDay;
@@ -73,24 +128,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
               });
             },
           ),
-          SizedBox(height: 10),
-          Text("Playdates on ${_selectedDay.toLocal().toString().split(' ')[0]}",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          Expanded(
-            child: ListView(
-              children: (_events[_selectedDay] ?? []).map((event) {
-                return ListTile(
-                  title: Text(event),
-                  leading: Icon(Icons.event),
-                );
-              }).toList(),
-            ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _showCreatePlaydateDialog,
+            child: Text('Add Playdate'),
           ),
+          SizedBox(height: 20),
+          _upcomingPlaydates.isNotEmpty
+              ? Expanded(
+                  child: ListView.builder(
+                    itemCount: _upcomingPlaydates.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(_upcomingPlaydates[index]),
+                      );
+                    },
+                  ),
+                )
+              : Center(
+                  child: Text('No upcoming playdates'),
+                ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addPlaydate,
-        child: Icon(Icons.add),
       ),
     );
   }
