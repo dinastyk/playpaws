@@ -45,6 +45,7 @@ dependencies:
   intl: ^0.18.1 #for the calendar to convert the dates into readable versions for the app
   flutter_card_swiper: 
   google_fonts: ^4.0.0
+  http:
 
 dev_dependencies:
   flutter_test:
