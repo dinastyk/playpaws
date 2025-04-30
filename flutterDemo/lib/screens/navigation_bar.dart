@@ -58,18 +58,28 @@ class _NavigationExampleState extends State<NavigationExample> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: pages[currentPageIndex],
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-            // if (index==0){
-            //   HomePage().fetchDogs();
-            // }
-          });
-        },
-        backgroundColor: const Color(0xFF1A69C6), 
-        indicatorColor: Colors.orange,
-        selectedIndex: currentPageIndex,
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          labelTextStyle: WidgetStateProperty.all(
+            const TextStyle(color: Colors.white), 
+          ),
+          iconTheme: WidgetStateProperty.all(
+            const IconThemeData(color: Colors.white),
+          ),
+        ),
+        child: NavigationBar(
+          backgroundColor: const Color(0xFF1A69C6),
+          indicatorColor: Colors.orange,
+          selectedIndex: currentPageIndex,
+          onDestinationSelected: (int index) {
+            setState(() {
+              currentPageIndex = index;
+            });
+          },
+        // backgroundColor: const Color(0xFF1A69C6), 
+        
+        // indicatorColor: Colors.orange,
+        // selectedIndex: currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(
             selectedIcon: Icon(Icons.home),
@@ -103,7 +113,9 @@ class _NavigationExampleState extends State<NavigationExample> {
           // ),
         ],
       ),
+      )
     );
+    
   }
 }
 
