@@ -67,6 +67,7 @@ class _NavigationExampleState extends State<NavigationExample> {
             // }
           });
         },
+        backgroundColor: const Color(0xFF1A69C6), 
         indicatorColor: Colors.orange,
         selectedIndex: currentPageIndex,
         destinations: const <Widget>[
