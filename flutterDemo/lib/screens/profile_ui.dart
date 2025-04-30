@@ -277,9 +277,16 @@ class FullScreenImageView extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text("Photo"),
-      ),
+  backgroundColor: Colors.black,
+  automaticallyImplyLeading: false, // disables default back button
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+    onPressed: () {
+      Navigator.pop(context); // go back to the previous screen
+    },
+  ),
+  title: const Text("Photo", style: TextStyle(color: Colors.white)),
+),
       body: Center(
         child: InteractiveViewer(
           child: Image.network(imageUrl),
