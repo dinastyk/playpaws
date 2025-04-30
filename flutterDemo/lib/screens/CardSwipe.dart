@@ -251,8 +251,12 @@ class CardSwipe extends StatefulWidget {
  @override
 Widget build(BuildContext context) {
   return Scaffold(
-    appBar: AppBar(title: Text("Find Your Pawfect Match!")),
-    backgroundColor: const Color(0xFF1A69C6),
+    appBar: AppBar(
+    // title: const Text("Find Your Pawfect Match!"),
+    backgroundColor: const  Color(0xFFD1E4FF), // Customize app bar color
+    foregroundColor: Colors.black, // Sets the color of the title and icons
+  ),
+    backgroundColor: const  Color(0xFFD1E4FF),
     body: Padding(
       padding: const EdgeInsets.all(16.0),
       child: widget.dogs.isEmpty
@@ -295,69 +299,72 @@ class DogCard extends StatelessWidget {
 
   const DogCard({Key? key, required this.dogDoc}) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    var dogData = dogDoc.data() as Map<String, dynamic>;
+@override
+Widget build(BuildContext context) {
+  var dogData = dogDoc.data() as Map<String, dynamic>;
+  final screenWidth = MediaQuery.of(context).size.width;
+  final cardSize = screenWidth * 0.85; // 85% of screen width
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DogProfileScreen(dogData: dogData),
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DogProfileScreen(dogData: dogData),
+        ),
+      );
+    },
+    child: Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: Color(0xFFD1E4FF),
+      shadowColor: Colors.orangeAccent,
+      child: Container(
+        height: cardSize, // make it square
+        width: cardSize,
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, Color(0xFFFFF3E0)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        );
-      },
-      child: Card(
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        color: Colors.white,
-        shadowColor: Colors.orangeAccent,
-        child: Container(
-          height: double.infinity,
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, Color(0xFFFFF3E0)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  dogData["dogPictureURL"] ??
+                      "https://www.ohio.edu/sites/default/files/styles/max_650x650/public/2025-03/Image.jpeg?itok=hc0EF56Z",
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.network(
-                    dogData["dogPictureURL"] ??
-                        "https://www.ohio.edu/sites/default/files/styles/max_650x650/public/2025-03/Image.jpeg?itok=hc0EF56Z",
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+            const SizedBox(height: 12),
+            Text(
+              dogData["name"] ?? "No name",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFEF6C00),
               ),
-              const SizedBox(height: 12),
-              Text(
-                dogData["name"] ?? "No name",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFEF6C00),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                dogData["breed"] ?? "Unknown breed",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              dogData["breed"] ?? "Unknown breed",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 
