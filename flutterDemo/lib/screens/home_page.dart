@@ -43,7 +43,7 @@ class _HomePageState extends State<HomePage> {
       ),
       home: Scaffold(
 appBar: AppBar(
-  backgroundColor: const Color(0xFF1A69C6),
+  backgroundColor: const Color(0xFF1A69C6), 
   title: Text(
     'PlayPaws Home',
     style: TextStyle(
