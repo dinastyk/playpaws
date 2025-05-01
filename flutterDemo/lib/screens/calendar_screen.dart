@@ -4,142 +4,163 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+  const CalendarScreen({super.key});
 
   @override
-  _CalendarScreenState createState() => _CalendarScreenState();
+  State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<DateTime, List<String>> _playdates = {}; // Date -> List of Events
+  Map<DateTime, List<Map<String, dynamic>>> _events = {};
 
   @override
   void initState() {
     super.initState();
-    _loadPlaydates();
+    _fetchPlaydates();
   }
 
-  Future<void> _loadPlaydates() async {
-    QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('playdates').get();
+  Future<void> _fetchPlaydates() async {
+    final snapshot = await FirebaseFirestore.instance.collection('playdates').get();
 
-    Map<DateTime, List<String>> playdateMap = {};
+    Map<DateTime, List<Map<String, dynamic>>> events = {};
 
     for (var doc in snapshot.docs) {
-      DateTime dateTime = (doc['date'] as Timestamp).toDate();
-      String location = doc['location'] ?? 'Unknown Location';
+      if (doc.data().containsKey('date')) {
+        final Timestamp timestamp = doc['date'];
+        final DateTime date = timestamp.toDate();
 
-      DateTime dateOnly = DateTime(dateTime.year, dateTime.month, dateTime.day);
-      String eventDetails =
-          "${DateFormat('hh:mm a').format(dateTime)} - $location";
+        final DateTime eventDay = DateTime(date.year, date.month, date.day);
 
-      if (!playdateMap.containsKey(dateOnly)) {
-        playdateMap[dateOnly] = [];
+        final String formattedTime = DateFormat('hh:mm a').format(date);
+        final GeoPoint location = doc['location'];
+        final String details = '${formattedTime} - Location: ${location.latitude}, ${location.longitude}';
+
+        if (!events.containsKey(eventDay)) {
+          events[eventDay] = [];
+        }
+        events[eventDay]!.add({
+          'time': formattedTime,
+          'location': location,
+          'details': details,
+        });
       }
-      playdateMap[dateOnly]!.add(eventDetails);
     }
 
     setState(() {
-      _playdates = playdateMap;
+      _events = events;
     });
   }
 
-  List<String> _getPlaydatesForDay(DateTime day) {
-    return _playdates[DateTime(day.year, day.month, day.day)] ?? [];
+  List<Map<String, dynamic>> _getEventsForDay(DateTime day) {
+    return _events[DateTime(day.year, day.month, day.day)] ?? [];
   }
 
   void _showCreatePlaydateDialog() {
-    TextEditingController locationController = TextEditingController();
-    DateTime selectedDateTime = DateTime.now();
+    DateTime selectedDate = DateTime.now();
+    TimeOfDay selectedTime = TimeOfDay.now();
+    TextEditingController locationLatController = TextEditingController();
+    TextEditingController locationLngController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AlertDialog(
-              title: Text('Create Playdate'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: locationController,
-                      decoration: InputDecoration(labelText: 'Location'),
-                    ),
-                    SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () async {
-                        DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDateTime,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2100),
-                        );
-                        if (pickedDate != null) {
-                          TimeOfDay? pickedTime = await showTimePicker(
-                            context: context,
-                            initialTime: TimeOfDay.now(),
-                          );
-                          if (pickedTime != null) {
-                            setModalState(() {
-                              selectedDateTime = DateTime(
-                                pickedDate.year,
-                                pickedDate.month,
-                                pickedDate.day,
-                                pickedTime.hour,
-                                pickedTime.minute,
-                              );
-                            });
-                          }
-                        }
-                      },
-                      child: Text('Select Date & Time'),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      "Selected: ${DateFormat('MMMM dd, yyyy – hh:mm a').format(selectedDateTime)}",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Cancel'),
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text('Create Playdate'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime(2030),
+                    );
+                    if (date != null) {
+                      setDialogState(() {
+                        selectedDate = date;
+                      });
+                    }
+                  },
+                  child: Text('Select Date'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    String location = locationController.text.trim();
-                    if (location.isNotEmpty) {
-                      await FirebaseFirestore.instance.collection('playdates').add({
-                        'date': Timestamp.fromDate(selectedDateTime),
-                        'location': location,
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: selectedTime,
+                    );
+                    if (time != null) {
+                      setDialogState(() {
+                        selectedTime = time;
                       });
-                      await _loadPlaydates();
-                      Navigator.pop(context);
                     }
                   },
-                  child: Text('Create'),
+                  child: Text('Select Time'),
+                ),
+                TextField(
+                  controller: locationLatController,
+                  decoration: InputDecoration(labelText: 'Latitude'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: locationLngController,
+                  decoration: InputDecoration(labelText: 'Longitude'),
+                  keyboardType: TextInputType.number,
                 ),
               ],
-            );
-          },
-        );
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final double? lat = double.tryParse(locationLatController.text);
+                  final double? lng = double.tryParse(locationLngController.text);
+
+                  if (lat != null && lng != null) {
+                    final DateTime finalDateTime = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      selectedTime.hour,
+                      selectedTime.minute,
+                    );
+
+                    await FirebaseFirestore.instance.collection('playdates').add({
+                      'date': Timestamp.fromDate(finalDateTime),
+                      'location': GeoPoint(lat, lng),
+                      'status': 'Confirmed',
+                      // Add 'dogIDs' and 'confirmedDogOwners' as needed
+                    });
+
+                    Navigator.pop(context);
+                    _fetchPlaydates();
+                  }
+                },
+                child: Text('Create'),
+              ),
+            ],
+          );
+        });
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    DateTime today = DateTime.now();
+    final eventsToday = _selectedDay != null ? _getEventsForDay(_selectedDay!) : [];
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Playdate Calendar'),
+        title: Text('Calendar'),
         actions: [
           IconButton(
             icon: Icon(Icons.add),
@@ -151,55 +172,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           TableCalendar(
             firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2100, 12, 31),
+            lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
-            selectedDayPredicate: (day) {
-              return isSameDay(_selectedDay, day);
-            },
+            calendarFormat: _calendarFormat,
+            eventLoader: _getEventsForDay,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
               });
             },
-            calendarFormat: _calendarFormat,
             onFormatChanged: (format) {
               setState(() {
                 _calendarFormat = format;
               });
             },
-            eventLoader: (day) => _getPlaydatesForDay(day),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Expanded(
-            child: _buildEventList(),
+            child: ListView.builder(
+              itemCount: eventsToday.length,
+              itemBuilder: (context, index) {
+                final event = eventsToday[index];
+                return ListTile(
+                  leading: Icon(Icons.pets),
+                  title: Text(event['details']),
+                );
+              },
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildEventList() {
-    DateTime day = _selectedDay ?? DateTime.now();
-    List<String> events = _getPlaydatesForDay(day);
-
-    if (events.isEmpty) {
-      return Center(
-        child: Text('No playdates for this day 🐶'),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: events.length,
-      itemBuilder: (context, index) {
-        return Card(
-          margin: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-          child: ListTile(
-            leading: Icon(Icons.pets, color: Colors.deepPurple),
-            title: Text(events[index]),
-          ),
-        );
-      },
     );
   }
 }
