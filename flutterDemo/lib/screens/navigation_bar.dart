@@ -46,7 +46,7 @@ class _NavigationExampleState extends State<NavigationExample> {
   final List<Widget> pages = [
     const HomePage(),
     // const NotificationsPage(),
-    const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
+    //const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
     const ChatsPage(),
     const CalendarScreen(), // Added new Calendar Page
     const SettingsPage(),
@@ -90,10 +90,12 @@ class _NavigationExampleState extends State<NavigationExample> {
           //   icon: Badge(child: Icon(Icons.notifications_sharp)),
           //   label: 'Notifications',
           // ),
+          /*
           NavigationDestination(
             icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
             label: 'Messages',
           ),
+          */
           NavigationDestination
           (
             icon: Icon(Icons.chat_bubble), label: 'Chats',
