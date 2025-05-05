@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
-import 'screens/navigation_bar.dart';
+import 'screens/choose_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,8 +24,11 @@ class MyApp extends StatelessWidget {
         useMaterial3:
             true, //permits use of Google Materal3 design system for app tabs
       ),
-      // home: const MyHomePage(title: 'PlayPaws Demo Home Page'),
-      home: LoginScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginScreen(), //CHANGE HERE to test out pages!
+      },
+
     );
   }
 }
