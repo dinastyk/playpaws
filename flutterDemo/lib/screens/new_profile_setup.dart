@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'choose_preferences.dart';
 
 class NewProfileSetup extends StatefulWidget {
   const NewProfileSetup({Key? key}) : super(key: key);
@@ -24,9 +25,19 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
   final List<String> energyLevels = ['Low', 'Medium', 'High'];
 
   // Dog personality selection
-  final List<String> availablePersonalities = ['Friendly', 'Playful', 'Shy', 'Aggressive', 'Protective',
-    'Curious', 'Exciteable', 'Calm', 'Anxious', 'Clever', 'Goofy'
-    ];
+  final List<String> availablePersonalities = [
+    'Friendly',
+    'Playful',
+    'Shy',
+    'Aggressive',
+    'Protective',
+    'Curious',
+    'Exciteable',
+    'Calm',
+    'Anxious',
+    'Clever',
+    'Goofy'
+  ]; //Make sure this ist is the same as those listed in new_profile_setup.dart
   List<String> selectedPersonalities = []; // Stores what user selects
 
   final _formKey = GlobalKey<FormState>();
@@ -35,14 +46,14 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: No authenticated user found.'))
-      );
+          SnackBar(content: Text('Error: No authenticated user found.')));
       return;
     }
 
     try {
       // 1. Get number of existing users
-      final usersSnapshot = await FirebaseFirestore.instance.collection('users').get();
+      final usersSnapshot =
+          await FirebaseFirestore.instance.collection('users').get();
       final existingUserCount = usersSnapshot.docs.length;
 
       int newUserNumber = existingUserCount + 1;
@@ -54,7 +65,8 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
       final newDogId = 'dogId$newUserNumber';
 
       // 2. Create Dog document manually with ID
-      final dogDocRef = FirebaseFirestore.instance.collection('dogs').doc(newDogId);
+      final dogDocRef =
+          FirebaseFirestore.instance.collection('dogs').doc(newDogId);
       await dogDocRef.set({
         'name': dogNameController.text.trim(),
         'breed': breedController.text.trim(),
@@ -80,15 +92,18 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Account successfully created!'))
-      );
+          SnackBar(content: Text('Account successfully created!')));
 
-      Navigator.pop(context);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChoosePreferences(userDocId: newUserId),
+        ),
+      );
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating profile: $e'))
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error creating profile: $e')));
     }
   }
 
@@ -110,8 +125,9 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
                 TextFormField(
                   controller: nameController,
                   decoration: InputDecoration(labelText: 'Your Name'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Please enter your name' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter your name'
+                      : null,
                 ),
                 SizedBox(height: 16),
 
@@ -119,8 +135,9 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
                 TextFormField(
                   controller: dogNameController,
                   decoration: InputDecoration(labelText: "Dog's Name"),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Please enter your dog\'s name' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter your dog\'s name'
+                      : null,
                 ),
                 SizedBox(height: 16),
 
@@ -128,8 +145,9 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
                 TextFormField(
                   controller: breedController,
                   decoration: InputDecoration(labelText: "Dog's Breed"),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Please enter your dog\'s breed' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter your dog\'s breed'
+                      : null,
                 ),
                 SizedBox(height: 16),
 
@@ -138,8 +156,9 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
                   controller: weightController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(labelText: "Dog's Weight (lbs)"),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Please enter your dog\'s weight' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter your dog\'s weight'
+                      : null,
                 ),
                 SizedBox(height: 16),
 
@@ -174,8 +193,9 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
                       selectedEnergyLevel = value;
                     });
                   },
-                  validator: (value) =>
-                      value == null ? 'Please select dog\'s energy level' : null,
+                  validator: (value) => value == null
+                      ? 'Please select dog\'s energy level'
+                      : null,
                 ),
                 SizedBox(height: 24),
 
