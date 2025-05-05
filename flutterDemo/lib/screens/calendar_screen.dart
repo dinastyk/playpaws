@@ -1,63 +1,173 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
   @override
-  _CalendarScreenState createState() => _CalendarScreenState();
+  State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
-  Map<DateTime, List<String>> _events = {}; // Store events for each day
+  DateTime? _selectedDay;
+  Map<DateTime, List<Map<String, dynamic>>> _events = {};
 
   @override
   void initState() {
     super.initState();
-    _events = {
-      DateTime.now(): ["Morning Walk", "Evening Playdate"],
-      DateTime.now().add(Duration(days: 1)): ["Vet Appointment"],
-    };
+    _fetchPlaydates();
   }
 
-  void _addPlaydate() {
+  Future<void> _fetchPlaydates() async {
+    final snapshot = await FirebaseFirestore.instance.collection('playdates').get();
+
+    Map<DateTime, List<Map<String, dynamic>>> events = {};
+
+    for (var doc in snapshot.docs) {
+      if (doc.data().containsKey('date')) {
+        final Timestamp timestamp = doc['date'];
+        final DateTime date = timestamp.toDate();
+
+        final DateTime eventDay = DateTime(date.year, date.month, date.day);
+
+        final String formattedTime = DateFormat('hh:mm a').format(date);
+        final GeoPoint location = doc['location'];
+        final String details = '${formattedTime} - Location: ${location.latitude}, ${location.longitude}';
+
+        if (!events.containsKey(eventDay)) {
+          events[eventDay] = [];
+        }
+        events[eventDay]!.add({
+          'time': formattedTime,
+          'location': location,
+          'details': details,
+        });
+      }
+    }
+
+    setState(() {
+      _events = events;
+    });
+  }
+
+  List<Map<String, dynamic>> _getEventsForDay(DateTime day) {
+    return _events[DateTime(day.year, day.month, day.day)] ?? [];
+  }
+
+  void _showCreatePlaydateDialog() {
+    DateTime selectedDate = DateTime.now();
+    TimeOfDay selectedTime = TimeOfDay.now();
+    TextEditingController locationLatController = TextEditingController();
+    TextEditingController locationLngController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) {
-        TextEditingController eventController = TextEditingController();
-        return AlertDialog(
-          title: Text("Add Playdate"),
-          content: TextField(
-            controller: eventController,
-            decoration: InputDecoration(hintText: "Enter event name"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancel"),
+        return StatefulBuilder(builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text('Create Playdate'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime(2030),
+                    );
+                    if (date != null) {
+                      setDialogState(() {
+                        selectedDate = date;
+                      });
+                    }
+                  },
+                  child: Text('Select Date'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: selectedTime,
+                    );
+                    if (time != null) {
+                      setDialogState(() {
+                        selectedTime = time;
+                      });
+                    }
+                  },
+                  child: Text('Select Time'),
+                ),
+                TextField(
+                  controller: locationLatController,
+                  decoration: InputDecoration(labelText: 'Latitude'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: locationLngController,
+                  decoration: InputDecoration(labelText: 'Longitude'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _events[_selectedDay] = (_events[_selectedDay] ?? [])..add(eventController.text);
-                });
-                Navigator.pop(context);
-              },
-              child: Text("Add"),
-            ),
-          ],
-        );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final double? lat = double.tryParse(locationLatController.text);
+                  final double? lng = double.tryParse(locationLngController.text);
+
+                  if (lat != null && lng != null) {
+                    final DateTime finalDateTime = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      selectedTime.hour,
+                      selectedTime.minute,
+                    );
+
+                    await FirebaseFirestore.instance.collection('playdates').add({
+                      'date': Timestamp.fromDate(finalDateTime),
+                      'location': GeoPoint(lat, lng),
+                      'status': 'Confirmed',
+                      // Add 'dogIDs' and 'confirmedDogOwners' as needed
+                    });
+
+                    Navigator.pop(context);
+                    _fetchPlaydates();
+                  }
+                },
+                child: Text('Create'),
+              ),
+            ],
+          );
+        });
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final eventsToday = _selectedDay != null ? _getEventsForDay(_selectedDay!) : [];
+
     return Scaffold(
-      appBar: AppBar(title: Text('Calendar')),
+      appBar: AppBar(
+        title: Text('Calendar'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: _showCreatePlaydateDialog,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           TableCalendar(
@@ -65,6 +175,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             calendarFormat: _calendarFormat,
+            eventLoader: _getEventsForDay,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
@@ -72,25 +183,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 _focusedDay = focusedDay;
               });
             },
+            onFormatChanged: (format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            },
           ),
-          SizedBox(height: 10),
-          Text("Playdates on ${_selectedDay.toLocal().toString().split(' ')[0]}",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
           Expanded(
-            child: ListView(
-              children: (_events[_selectedDay] ?? []).map((event) {
+            child: ListView.builder(
+              itemCount: eventsToday.length,
+              itemBuilder: (context, index) {
+                final event = eventsToday[index];
                 return ListTile(
-                  title: Text(event),
-                  leading: Icon(Icons.event),
+                  leading: Icon(Icons.pets),
+                  title: Text(event['details']),
                 );
-              }).toList(),
+              },
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addPlaydate,
-        child: Icon(Icons.add),
       ),
     );
   }

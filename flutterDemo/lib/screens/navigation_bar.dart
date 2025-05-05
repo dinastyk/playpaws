@@ -45,62 +45,77 @@ class _NavigationExampleState extends State<NavigationExample> {
 
   final List<Widget> pages = [
     const HomePage(),
-    const NotificationsPage(),
+    // const NotificationsPage(),
     const MessagesPage(receiverID: 'f0kBZmUBUFR3ef8zVZwcTiDetB22'),
-    const SettingsPage(),
-    const CalendarScreen(), // Added new Calendar Page
-    const DebugScreen(),
     const ChatsPage(),
+    const CalendarScreen(), // Added new Calendar Page
+    const SettingsPage(),
+    // const DebugScreen(),
+
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: pages[currentPageIndex],
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-            // if (index==0){
-            //   HomePage().fetchDogs();
-            // }
-          });
-        },
-        indicatorColor: Colors.amber,
-        selectedIndex: currentPageIndex,
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          labelTextStyle: WidgetStateProperty.all(
+            const TextStyle(color: Colors.white), 
+          ),
+          iconTheme: WidgetStateProperty.all(
+            const IconThemeData(color: Colors.white),
+          ),
+        ),
+        child: NavigationBar(
+          backgroundColor: const Color(0xFF1A69C6),
+          indicatorColor: Colors.orange,
+          selectedIndex: currentPageIndex,
+          onDestinationSelected: (int index) {
+            setState(() {
+              currentPageIndex = index;
+            });
+          },
+        // backgroundColor: const Color(0xFF1A69C6), 
+        
+        // indicatorColor: Colors.orange,
+        // selectedIndex: currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(
             selectedIcon: Icon(Icons.home),
             icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.notifications_sharp)),
-            label: 'Notifications',
-          ),
+          // NavigationDestination(
+          //   icon: Badge(child: Icon(Icons.notifications_sharp)),
+          //   label: 'Notifications',
+          // ),
           NavigationDestination(
             icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
             label: 'Messages',
-          ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.settings_sharp)),
-            label: 'Settings',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_today), // Calendar icon
-            label: 'Calendar',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bug_report),
-            label: 'Debug',
           ),
           NavigationDestination
           (
             icon: Icon(Icons.chat_bubble), label: 'Chats',
           ),
+                    NavigationDestination(
+            icon: Icon(Icons.calendar_today), // Calendar icon
+            label: 'Calendar',
+          ),
+          NavigationDestination(
+            icon: Badge(child: Icon(Icons.settings_sharp)),
+            label: 'Settings',
+          ),
+
+          // NavigationDestination(
+          //   icon: Icon(Icons.bug_report),
+          //   label: 'Debug',
+          // ),
         ],
       ),
+      )
     );
+    
   }
 }
 
