@@ -35,6 +35,7 @@ class SettingsPage extends StatelessWidget
                     );
                   },
                 ),
+                /*
               
               const Divider(),
               
@@ -55,6 +56,7 @@ class SettingsPage extends StatelessWidget
                 subtitle: const Text("Get help"),
                 onTap: () {},
               ),
+              */
             ],
           ),
           Align
