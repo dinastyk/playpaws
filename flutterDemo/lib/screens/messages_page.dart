@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/intl.dart';
 import '../firebase_options.dart';
 
 
@@ -57,6 +58,123 @@ class MessagesPageState extends State<MessagesPage>
     _messageController.dispose();
     super.dispose();
   }
+void _openPlaydateDialog() {
+  final locationController = TextEditingController();
+  DateTime selectedDateTime = DateTime.now();
+  final creatorId = FirebaseAuth.instance.currentUser?.uid;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: const Text('Schedule Playdate'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: locationController,
+                  decoration: const InputDecoration(labelText: 'Location'),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  child: const Text('Select Date & Time'),
+                  onPressed: () async {
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDateTime,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedDate != null) {
+                      final pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+                      );
+                      if (pickedTime != null) {
+                        setModalState(() {
+                          selectedDateTime = DateTime(
+                            pickedDate.year,
+                            pickedDate.month,
+                            pickedDate.day,
+                            pickedTime.hour,
+                            pickedTime.minute,
+                          );
+                        });
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+               Text(
+  "Selected: ${DateFormat('MMMM dd, yyyy – hh:mm a').format(selectedDateTime)}",
+  style: TextStyle(fontSize: 14),
+),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              ElevatedButton(
+                child: const Text('Schedule'),
+                onPressed: () async {
+                  final location = locationController.text.trim();
+                  if (location.isNotEmpty && creatorId != null && receiverID.isNotEmpty) {
+                    try {
+                      final conflicts = await FirebaseFirestore.instance
+                          .collection('playdate')
+                          .where('date', isEqualTo: Timestamp.fromDate(selectedDateTime))
+                          .where('status', isEqualTo: 'accepted')
+                          .where(Filter.or(
+                            Filter('creatorId', isEqualTo: creatorId),
+                            Filter('receiverId', isEqualTo: creatorId),
+                            Filter('creatorId', isEqualTo: receiverID),
+                            Filter('receiverId', isEqualTo: receiverID),
+                          ))
+                          .get();
+
+                      if (conflicts.docs.isNotEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('A user already has an accepted playdate at this time.')),
+                        );
+                        return;
+                      }
+
+                      await FirebaseFirestore.instance.collection('playdate').add({
+                        'creatorId': creatorId,
+                        'date': Timestamp.fromDate(selectedDateTime),
+                        'location': location,
+                        'receiverId': receiverID,
+                        'status': "pending",
+                      });
+
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Playdate scheduled!')),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to create playdate: $e')),
+                      );
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please fill out all fields')),
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 
   void sendMessage() async 
   {
@@ -134,7 +252,16 @@ class MessagesPageState extends State<MessagesPage>
   {
     return Scaffold
     (
-      appBar: AppBar(title: const Text('Messages'),),
+      // appBar: AppBar(title: const Text('Messages'),),
+      appBar: AppBar(
+  title: const Text('Messages'),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.calendar_today),
+      onPressed: _openPlaydateDialog,
+    ),
+  ],
+),
       body: 
       Column
       (
