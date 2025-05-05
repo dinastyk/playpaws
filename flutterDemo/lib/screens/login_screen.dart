@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'navigation_bar.dart';
-//import 'profile_ui.dart';
+import 'create_account.dart';
+import 'new_profile_setup.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -56,20 +57,23 @@ class LoginScreenState extends State<LoginScreen> {
               onPressed: () async {
                 String email = emailController.text;
                 String password = passwordController.text;
-                var user = await authService.signInWithEmailPassword(email, password);
+                var user =
+                    await authService.signInWithEmailPassword(email, password);
 
                 if (user != null) {
                   debugPrint("Logged in as: ${user.email}");
                   if (!context.mounted) return;
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => NavigationExample()),
+                    MaterialPageRoute(
+                        builder: (context) => NavigationExample()),
                   );
                 } else {
                   debugPrint("Login failed.");
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Login failed. Please try again.")),
+                    const SnackBar(
+                        content: Text("Login failed. Please try again.")),
                   );
                 }
               },
@@ -92,7 +96,8 @@ class LoginScreenState extends State<LoginScreen> {
                   if (!context.mounted) return;
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => NavigationExample()),
+                    MaterialPageRoute(
+                        builder: (context) => NavigationExample()),
                   );
                 } else {
                   debugPrint("Google Sign-In failed.");
@@ -103,6 +108,37 @@ class LoginScreenState extends State<LoginScreen> {
                 }
               },
               child: const Text("Login with Google"),
+            ),
+
+            const SizedBox(height: 20),
+
+            // 📋 Sign Up Prompt
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Don't have an account? ",
+                  style: TextStyle(fontSize: 14),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CreateAccountScreen()),
+                    );
+                  },
+                  child: const Text(
+                    "Sign up",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
