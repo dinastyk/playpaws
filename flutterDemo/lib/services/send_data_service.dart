@@ -25,9 +25,9 @@ Future<void> sendEmbeddingRequest() async {
 
     if (preferred_traits != null && preferred_traits.isNotEmpty) {
       final sentence = (preferred_traits.toSet().join(" ")).trim();
-
+      print(sentence);
       final response = await http.post(
-        Uri.parse("https://ce9e-2601-84-8601-61c0-fcc4-ec5c-971c-e3ac.ngrok-free.app/generate-embedding"),
+        Uri.parse("https://4c22-2601-84-8601-61c0-9059-c7a8-b703-ec8f.ngrok-free.app/generate-embedding"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "user_id": user.uid,
@@ -85,9 +85,9 @@ Future<void> sendDogEmbeddingRequest() async {
 
       if (personality != null && personality.isNotEmpty) {
         final sentence = (personality.toSet().join(" ")).trim();
-
+        print(sentence);
         final response = await http.post(
-          Uri.parse("https://ce9e-2601-84-8601-61c0-fcc4-ec5c-971c-e3ac.ngrok-free.app/generate-embedding"),
+          Uri.parse("https://4c22-2601-84-8601-61c0-9059-c7a8-b703-ec8f.ngrok-free.app/generate-embedding"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({
             "user_id": user.uid,
