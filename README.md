@@ -1,9 +1,3 @@
-### cd flutterDemo
-### flutter doctor - for checking versions
-### flutter pub get 
-### flutter run
-
-
 1. Must have flutter, python, cocoapods, and xcode or android studio.
 2. Download Repo
 3. Install python pacakges for backend
