@@ -8,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'dog_profile_screen.dart';
-import 'dart:math';
 
 // Function to calculate cosine similarity between two vectors
 double cosineSimilarity(List<double> vectorA, List<double> vectorB) {

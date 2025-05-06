@@ -27,7 +27,7 @@ Future<void> sendEmbeddingRequest() async {
       final sentence = (preferred_traits.toSet().join(" ")).trim();
       print(sentence);
       final response = await http.post(
-        Uri.parse("https://4c22-2601-84-8601-61c0-9059-c7a8-b703-ec8f.ngrok-free.app/generate-embedding"),
+        Uri.parse("https://muskrat-star-midge.ngrok-free.app/generate-embedding"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "user_id": user.uid,
@@ -87,7 +87,7 @@ Future<void> sendDogEmbeddingRequest() async {
         final sentence = (personality.toSet().join(" ")).trim();
         print(sentence);
         final response = await http.post(
-          Uri.parse("https://4c22-2601-84-8601-61c0-9059-c7a8-b703-ec8f.ngrok-free.app/generate-embedding"),
+          Uri.parse("https://muskrat-star-midge.ngrok-free.app/generate-embedding"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({
             "user_id": user.uid,
