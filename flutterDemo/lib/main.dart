@@ -3,12 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/choose_preferences.dart';
-<<<<<<< HEAD
 import 'package:flutter/material.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
-=======
->>>>>>> origin/main
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,19 +27,11 @@ class MyApp extends StatelessWidget {
             seedColor: const Color.fromARGB(255, 55, 90, 180)),
         useMaterial3: true,
       ),
-<<<<<<< HEAD
       navigatorObservers: [routeObserver],
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),
       },
-=======
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const LoginScreen(), //CHANGE HERE to test out pages!
-      },
-
->>>>>>> origin/main
     );
   }
 }
