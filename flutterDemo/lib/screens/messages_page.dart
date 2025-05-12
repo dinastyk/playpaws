@@ -302,6 +302,10 @@ void _openPlaydateDialog() {
                     print("senderID: ${messages[index]['senderID']}, current user: ${user?.uid}");
                     final message = messages[index]['text'];
                     final myMessage = messages[index]['senderID'] == user?.uid;
+
+                    final timestamp = messages[index]['timestamp'] as Timestamp?;
+                    final Time = timestamp != null ? DateFormat('hh:mm a').format(timestamp.toDate()) : 'Sending...';
+                    
                     return Align
                     (
                       alignment: myMessage ? Alignment.centerRight : Alignment.centerLeft,
@@ -318,13 +322,28 @@ void _openPlaydateDialog() {
                           color: myMessage ? Theme.of(context).colorScheme.primary : Colors.grey[300],
                           borderRadius: BorderRadius.circular(8.0),
                         ),
-                        child: Text
+                        child: Column
                         (
-                          message, 
-                          style: Theme.of(context).textTheme.bodyLarge!.copyWith
-                          (
-                            color: myMessage ? Theme.of(context).colorScheme.onPrimary : Colors.black,
-                          ),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: 
+                          [
+                            Text
+                            (
+                              message, style: Theme.of(context).textTheme.bodyLarge!.copyWith
+                              (
+                                color: myMessage ? Theme.of(context).colorScheme.onPrimary : Colors.black,
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+                            Text
+                            (
+                              Time, style: Theme.of(context).textTheme.bodySmall!.copyWith
+                              (
+                                color: myMessage ? Theme.of(context).colorScheme.onPrimary : Colors.black54, fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
