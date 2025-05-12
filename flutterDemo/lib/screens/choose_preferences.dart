@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:playpaws_test/services/send_data_service.dart';
 import 'navigation_bar.dart';
 
 class ChoosePreferences extends StatefulWidget {
@@ -54,7 +55,7 @@ class _ChoosePreferencesState extends State<ChoosePreferences> {
         .update({
       'preferences': preferences,
     });
-
+await sendEmbeddingRequest();;
     // Navigate to next page or show confirmation
     Navigator.pushReplacement(
       context,

@@ -3,6 +3,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+Future<void> cleanUpPlaydates() async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('playdate')
+      .where('status', whereIn: ['cancelled', 'declined'])
+      .get();
+
+  for (var doc in snapshot.docs) {
+    await doc.reference.delete();
+  }
+}
+
 Future<String> getUserName(String receiverId) async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -115,6 +126,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+     cleanUpPlaydates();
     _loadMatchedUsers(); // Load matched users on init
     _loadPlaydates();
   }

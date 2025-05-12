@@ -21,19 +21,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   // fetch dogs from the db
-  Future<void> fetchDogs() async {
+Future<void> fetchDogs() async {
+  if (mounted) {
     setState(() {
       isLoading = true;
     });
+  }
 
-    // call getDogs to fetch the list of dogs from Firestore
-    List<QueryDocumentSnapshot> fetchedDogs = await getDogs();
-    
+  List<QueryDocumentSnapshot> fetchedDogs = await getDogs();
+
+  if (mounted) {
     setState(() {
       dogs = fetchedDogs;
       isLoading = false;
     });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
