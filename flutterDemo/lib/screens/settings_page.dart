@@ -19,6 +19,7 @@ class SettingsPage extends StatelessWidget {
                 leading: const Icon(Icons.person),
                 title: const Text("Profile"),
                 subtitle: const Text("Manage your account"),
+<<<<<<< HEAD
                 onTap: () {
                   Navigator.push(
                     context,
@@ -27,7 +28,56 @@ class SettingsPage extends StatelessWidget {
                     routeObserver.subscribe(context as RouteAware, ModalRoute.of(context)!);
                   });
                 },
+=======
+                  onTap: () 
+                  {
+                    Navigator.push
+                    (
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                  },
+                ),
+                const Divider(),
+                ListTile
+                (
+                  leading: const Icon(Icons.info),
+                  title: const Text("Account Info"),
+                  subtitle: const Text("Check your account information."),
+                  onTap:() {},
+                ),
+
+                const Divider(),
+                ListTile
+                (
+                  leading: const Icon(Icons.pets),
+                  title: const Text("Change User Preferences"),
+                  subtitle: const Text("Update your preferences for which dogs you want to see."),
+                  onTap:() {},
+                ),
+                /*
+              
+              const Divider(),
+              
+              ListTile 
+              (
+                leading: const Icon(Icons.pets),
+                title: const Text("Your Pets"),
+                subtitle: const Text("See what pets you have, add or remove pets"),
+                onTap: () {},
               ),
+
+              const Divider(),
+              
+              ListTile 
+              (
+                leading: const Icon(Icons.help),
+                title: const Text("Customer Support"),
+                subtitle: const Text("Get help"),
+                onTap: () {},
+>>>>>>> origin/main
+              ),
+              */
             ],
           ),
           Align(

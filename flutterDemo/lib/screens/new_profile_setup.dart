@@ -26,7 +26,7 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
   final List<String> energyLevels = ['Low', 'Medium', 'High'];
 
   // Dog personality selection
-   final List<String> availablePersonalities = [
+  final List<String> availablePersonalities = [
     'Friendly',
     'Playful',
     'Shy',
@@ -43,6 +43,7 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
     'Active',
     'Sensitive',
     'Stubborn'
+    'Goofy'
   ]; //Make sure this ist is the same as those listed in new_profile_setup.dart
   List<String> selectedPersonalities = []; // Stores what user selects
 
@@ -91,15 +92,13 @@ class _NewProfileSetupState extends State<NewProfileSetup> {
         'email': user.email,
         'uid': user.uid, // Firebase Authentication UID
         'dog': dogDocRef,
-        'profilePictureURL': '',  // <-- ADD THIS line to avoid null crash
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-        'preferences': {}, 
-        'preferredPersonalities': [],
+        'preferences': {}, // Empty for now
+        'preferredPersonalities': [], // Empty for now
       });
 
 await sendDogEmbeddingRequest();
-
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Account successfully created!')));
 

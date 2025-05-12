@@ -51,7 +51,10 @@ dependencies:
       ref: master
   http:
   confetti: ^0.7.0
+<<<<<<< HEAD
   flutter_swipable: 
+=======
+>>>>>>> origin/main
   dropdown_search: ^5.0.6
   csv: ^5.0.2
 

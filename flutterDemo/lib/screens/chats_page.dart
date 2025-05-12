@@ -59,7 +59,7 @@ class ChatsPage extends StatelessWidget
               }
               final otherUserRef = otherParticipants.first;
               
-              return FutureBuilder
+              return FutureBuilder<DocumentSnapshot>
               (
                 future: otherUserRef.get(),
                 builder: (context, snapshot)
@@ -67,26 +67,43 @@ class ChatsPage extends StatelessWidget
                   //final displayName = snapshot.hasData ? (snapshot.data!.data() as Map<String, dynamic>)['username'] ?? otherUserRef.id : otherUserRef.id;
 
                   String displayName = otherUserRef.id;
+                  String profilePictureURL = '';
+
                   if (snapshot.hasData && snapshot.data!.exists)
                   {
                     final data = snapshot.data!.data() as Map<String, dynamic>?;
-                    if (data != null && data['username'] != null) 
+                    //if (data != null && data['username'] != null) 
+                    if (data != null)
                     {
-                      displayName = data['username'];
+                      displayName = data['username'] ?? otherUserRef.id;
+                      profilePictureURL = data['profilePictureURL'] ?? '';
                     }
                   }
 
-
-                  return ListTile
+                  return Column
                   (
-                    title: Text("Chat with $displayName"),
-                    subtitle: Text(chat['lastMessage'] ?? 'Tap to chat'),
-                    onTap: ()
-                    {
-                      Navigator.push(context, 
-                      MaterialPageRoute(builder: (_) => MessagesPage(receiverID: otherUserRef.id),),);
-                    }
+                    children: 
+                    [
+                      ListTile
+                      (
+                        leading: CircleAvatar
+                        (
+                          backgroundImage: profilePictureURL.isNotEmpty ? NetworkImage(profilePictureURL) : null,
+                          child: profilePictureURL.isEmpty ? const Icon(Icons.person) : null,
+                        ),
+
+                        title: Text("Chat with $displayName"),
+                        subtitle: Text(chat['lastMessage'] ?? 'Tap to chat'),
+                        onTap: ()
+                        {
+                          Navigator.push(context, 
+                          MaterialPageRoute(builder: (_) => MessagesPage(receiverID: otherUserRef.id),),);
+                        },
+                      ),
+                      const Divider(height: 1),
+                    ]
                   );
+                  
                 }
               );
             },
