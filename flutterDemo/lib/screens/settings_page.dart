@@ -35,6 +35,23 @@ class SettingsPage extends StatelessWidget
                     );
                   },
                 ),
+                const Divider(),
+                ListTile
+                (
+                  leading: const Icon(Icons.info),
+                  title: const Text("Account Info"),
+                  subtitle: const Text("Check your account information."),
+                  onTap:() {},
+                ),
+
+                const Divider(),
+                ListTile
+                (
+                  leading: const Icon(Icons.pets),
+                  title: const Text("Change User Preferences"),
+                  subtitle: const Text("Update your preferences for which dogs you want to see."),
+                  onTap:() {},
+                ),
                 /*
               
               const Divider(),
