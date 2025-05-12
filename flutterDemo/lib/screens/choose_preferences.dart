@@ -33,7 +33,12 @@ class _ChoosePreferencesState extends State<ChoosePreferences> {
     'Calm',
     'Anxious',
     'Clever',
-    'Goofy'
+    'Goofy',
+    'Laidback',
+    'Social',
+    'Active',
+    'Sensitive',
+    'Stuborn'
   ]; //Make sure this ist is the same as those listed in new_profile_setup.dart
   List<String> selectedPersonalities = [];
 

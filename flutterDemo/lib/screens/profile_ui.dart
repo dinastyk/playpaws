@@ -5,9 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:playpaws_test/screens/login_screen.dart';
 import 'settings_page.dart';
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../main.dart';
 
 void main() {
   runApp(const PlayPawsProfile());
@@ -34,8 +32,9 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   String ownerName = "Loading...";
   String dogName = "Loading...";
   String breed = "Loading...";
@@ -49,10 +48,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchProfileData(); // ✅ Ensure profile fetches on first screen push
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPush() {
     _fetchProfileData();
   }
 
-  void _fetchProfileData() async {
+  @override
+  void didPopNext() {
+    _fetchProfileData();
+  }
+
+  Future<void> _fetchProfileData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -75,7 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     setState(() {
       ownerName = userData['name'];
-      profilePictureURL = userData['profilePictureURL'];
+      profilePictureURL = userData['profilePictureURL'] ?? "";
       dogName = dogData['name'];
       breed = dogData['breed'];
       age = dogData['age'];
@@ -108,19 +129,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: buttonColor),
-          onPressed: () 
-          {
+          onPressed: () {
             Navigator.pop(context);
-          }
-          /*
-          {
-            Navigator.push
-            (
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsPage()),
-            );
           },
-          */
         ),
         actions: [
           IconButton(
@@ -129,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
               }
             },
@@ -179,7 +190,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text("All Photos"),
+                const Text("Photos"),
                 dogPictures.isNotEmpty
                     ? CarouselSlider(
                         options: CarouselOptions(
@@ -189,48 +200,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           viewportFraction: 0.5,
                         ),
                         items: dogPictures.map((url) {
-                          return Builder(
-                            builder: (BuildContext context) {
-                              return GestureDetector(
-                                onTap: () => _openFullScreenImage(url),
-                                child: Container(
-                                  width: 150,
-                                  margin: const EdgeInsets.symmetric(horizontal: 3.0),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    image: DecorationImage(
-                                      image: NetworkImage(url),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                          return GestureDetector(
+                            onTap: () => _openFullScreenImage(url),
+                            child: Container(
+                              width: 150,
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 3.0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                image: DecorationImage(
+                                  image: NetworkImage(url),
+                                  fit: BoxFit.cover,
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           );
                         }).toList(),
                       )
-                    : Row(
-                        children: List.generate(
-                          4,
-                          (index) => Container(
-                            margin: const EdgeInsets.all(4.0),
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: backgroundColor,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(child: Icon(Icons.photo_outlined)),
-                          ),
-                        ),
-                      ),
+                    : const Text("No dog photos available."),
                 const SizedBox(height: 16),
                 _buildInfoField("Breed", breed),
                 _buildInfoField("Age", "$age years"),
-                // _buildInfoField("Weight", "$weight kg"),
-                 _buildInfoField("Weight", "${weight.toStringAsFixed(2)} kg"),
+                _buildInfoField("Weight", "${weight.toStringAsFixed(2)} kg"),
                 _buildInfoField("Energy Level", energyLevel),
-                _buildInfoField("Personality Traits", personalityTraits.join(", ")),
+                _buildInfoField(
+                    "Personality Traits", personalityTraits.join(", ")),
               ],
             ),
           ),
@@ -238,7 +232,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             bottom: 16,
             left: 16,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditProfileScreen(
+                      ownerName: ownerName,
+                      dogName: dogName,
+                      breed: breed,
+                      age: age,
+                      weight: weight,
+                      energyLevel: energyLevel,
+                      personalityTraits: personalityTraits,
+                    ),
+                  ),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: buttonColor,
               ),
@@ -280,20 +289,215 @@ class FullScreenImageView extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-  backgroundColor: Colors.black,
-  automaticallyImplyLeading: false, // disables default back button
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-    onPressed: () {
-      Navigator.pop(context); // go back to the previous screen
-    },
-  ),
-  title: const Text("Photo", style: TextStyle(color: Colors.white)),
-),
+        backgroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text("Photo", style: TextStyle(color: Colors.white)),
+      ),
       body: Center(
         child: InteractiveViewer(
           child: Image.network(imageUrl),
         ),
+      ),
+    );
+  }
+}
+
+class EditProfileScreen extends StatefulWidget {
+  final String ownerName, dogName, breed, energyLevel;
+  final int age;
+  final double weight;
+  final List<String> personalityTraits;
+
+  const EditProfileScreen({
+    super.key,
+    required this.ownerName,
+    required this.dogName,
+    required this.breed,
+    required this.age,
+    required this.weight,
+    required this.energyLevel,
+    required this.personalityTraits,
+  });
+
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final _formKey = GlobalKey<FormState>();
+
+  late TextEditingController ownerController;
+  late TextEditingController dogController;
+  late TextEditingController breedController;
+  late TextEditingController ageController;
+  late TextEditingController weightController;
+
+  final List<String> energyLevels = ['Low', 'Medium', 'High'];
+  String? selectedEnergyLevel;
+
+  final List<String> availablePersonalities = [
+    'Friendly',
+    'Playful',
+    'Shy',
+    'Aggressive',
+    'Protective',
+    'Curious',
+    'Exciteable',
+    'Calm',
+    'Anxious',
+    'Clever',
+    'Goofy',
+    'Laidback',
+    'Social',
+    'Active',
+    'Sensitive',
+    'Stubborn'
+  ];
+  late List<String> selectedPersonalities;
+
+  @override
+  void initState() {
+    super.initState();
+    ownerController = TextEditingController(text: widget.ownerName);
+    dogController = TextEditingController(text: widget.dogName);
+    breedController = TextEditingController(text: widget.breed);
+    ageController = TextEditingController(text: widget.age.toString());
+    weightController = TextEditingController(text: widget.weight.toString());
+    selectedEnergyLevel = widget.energyLevel;
+    selectedPersonalities = List<String>.from(widget.personalityTraits);
+  }
+
+  Future<void> _saveChanges() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final userQuery = await _firestore
+        .collection('users')
+        .where('uid', isEqualTo: uid)
+        .limit(1)
+        .get();
+
+    if (userQuery.docs.isEmpty) return;
+
+    final userSnapshot = userQuery.docs.first;
+    final DocumentReference dogRef = userSnapshot['dog'];
+
+    await userSnapshot.reference.update({
+      'name': ownerController.text.trim(),
+    });
+
+    await dogRef.update({
+      'name': dogController.text.trim(),
+      'breed': breedController.text.trim(),
+      'age': int.tryParse(ageController.text.trim()) ?? widget.age,
+      'weight': double.tryParse(weightController.text.trim()) ?? widget.weight,
+      'energyLevel': selectedEnergyLevel,
+      'personality': selectedPersonalities,
+    });
+
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit Profile')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              _buildTextField('Owner Name', ownerController),
+              _buildTextField('Dog Name', dogController),
+              _buildTextField('Breed', breedController),
+              _buildTextField('Age', ageController, isNumber: true),
+              _buildTextField('Weight (kg)', weightController, isDecimal: true),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedEnergyLevel,
+                decoration: const InputDecoration(
+                  labelText: 'Dog\'s Energy Level',
+                  border: OutlineInputBorder(),
+                ),
+                items: energyLevels.map((level) {
+                  return DropdownMenuItem<String>(
+                    value: level,
+                    child: Text(level),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedEnergyLevel = value;
+                  });
+                },
+                validator: (value) =>
+                    value == null ? 'Please select dog\'s energy level' : null,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Select Dog\'s Personality Traits',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: availablePersonalities.map((trait) {
+                  final isSelected = selectedPersonalities.contains(trait);
+                  return ChoiceChip(
+                    label: Text(trait),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          selectedPersonalities.add(trait);
+                        } else {
+                          selectedPersonalities.remove(trait);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _saveChanges,
+                child: const Text('Save Changes'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller,
+      {bool isNumber = false, bool isDecimal = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: isNumber
+            ? TextInputType.number
+            : isDecimal
+                ? const TextInputType.numberWithOptions(decimal: true)
+                : TextInputType.text,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) return 'Required field';
+          return null;
+        },
       ),
     );
   }

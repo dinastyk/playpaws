@@ -3,32 +3,35 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/choose_preferences.dart';
+import 'package:flutter/material.dart';
+
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(MyApp());
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key}); // Add key parameter
+  const MyApp({super.key});
+
   @override
-  Widget build(BuildContext context) 
-  {
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PlayPaws Demo',
       theme: ThemeData(
-        // This is the theme of your application.
         colorScheme: ColorScheme.fromSeed(
             seedColor: const Color.fromARGB(255, 55, 90, 180)),
-        useMaterial3:
-            true, //permits use of Google Materal3 design system for app tabs
+        useMaterial3: true,
       ),
+      navigatorObservers: [routeObserver],
       initialRoute: '/',
       routes: {
-        '/': (context) => const LoginScreen(), //CHANGE HERE to test out pages!
+        '/': (context) => const LoginScreen(),
       },
-
     );
   }
 }
