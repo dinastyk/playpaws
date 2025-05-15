@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'login_screen.dart';
+import 'package:playpaws_test/screens/login_screen.dart';
 import 'profile_ui.dart';
-import 'change_preferences.dart';
-import '../main.dart'; // For routeObserver
+import 'package:firebase_auth/firebase_auth.dart';
+import '../screens/change_preferences.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -22,12 +21,54 @@ class SettingsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                  ).then((_) {
-                    routeObserver.subscribe(context as RouteAware, ModalRoute.of(context)!);
-                  });
+                    MaterialPageRoute(
+                        builder: (context) => const ProfileScreen()),
+                  );
                 },
               ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.info),
+                title: const Text("Account Info"),
+                subtitle: const Text("Check your account information."),
+                onTap: () {},
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.pets),
+                title: const Text("Change User Preferences"),
+                subtitle: const Text(
+                    "Update your preferences for which dogs you want to see."),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ChangePreferences()),
+                  );
+                },
+              ),
+              /*
+              
+              const Divider(),
+              
+              ListTile 
+              (
+                leading: const Icon(Icons.pets),
+                title: const Text("Your Pets"),
+                subtitle: const Text("See what pets you have, add or remove pets"),
+                onTap: () {},
+              ),
+
+              const Divider(),
+              
+              ListTile 
+              (
+                leading: const Icon(Icons.help),
+                title: const Text("Customer Support"),
+                subtitle: const Text("Get help"),
+                onTap: () {},
+              ),
+              */
             ],
           ),
           Align(
@@ -39,11 +80,10 @@ class SettingsPage extends StatelessWidget {
                   await FirebaseAuth.instance.signOut();
                   if (context.mounted) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    );
+                        MaterialPageRoute(builder: (context) => LoginScreen()));
                   }
                 },
-                child: const Text("Logout"),
+                child: Text("Logout"),
               ),
             ),
           ),
