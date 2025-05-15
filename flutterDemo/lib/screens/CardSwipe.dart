@@ -94,7 +94,7 @@ Future<List<QueryDocumentSnapshot>> sortDogs(
 
     final preferences = userData['preferences'];
     final weightPref = preferences['maxWeight'] ?? 0.0;
-
+    
     List<MapEntry<QueryDocumentSnapshot, double>> pairs = await Future.wait(
       filteredDogs.map((dog) async {
         var dogData = dog.data() as Map<String, dynamic>;
@@ -291,6 +291,7 @@ Widget build(BuildContext context) {
   );
 }
  }
+
 
 
 class DogCard extends StatelessWidget {
