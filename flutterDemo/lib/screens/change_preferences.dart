@@ -4,46 +4,60 @@ import 'package:flutter/material.dart';
 import 'package:playpaws_test/services/send_data_service.dart';
 import 'navigation_bar.dart';
 
-class ChoosePreferences extends StatefulWidget {
-  final String userDocId;
-  const ChoosePreferences({Key? key, required this.userDocId})
-      : super(key: key);
+class ChangePreferences extends StatefulWidget {
+  const ChangePreferences({super.key});
 
   @override
-  _ChoosePreferencesState createState() => _ChoosePreferencesState();
+  _ChangePreferencesState createState() => _ChangePreferencesState();
 }
 
-class _ChoosePreferencesState extends State<ChoosePreferences> {
-  // Preferences
-  String? selectedEnergyLevel;
+class _ChangePreferencesState extends State<ChangePreferences> {
   final List<String> energyLevels = ['Low', 'Medium', 'High'];
 
   double minAge = 0;
   double maxAge = 15;
   double maxWeight = 100;
 
-  final List<String> personalities = [
-    'Friendly',
-    'Playful',
-    'Shy',
-    'Aggressive',
-    'Protective',
-    'Curious',
-    'Exciteable',
-    'Calm',
-    'Anxious',
-    'Clever',
-    'Goofy',
-    'Laidback',
-    'Social',
-    'Active',
-    'Sensitive',
-    'Stuborn'
-    'Goofy'
-  ]; //Make sure this ist is the same as those listed in new_profile_setup.dart
+  String? selectedEnergyLevel;
   List<String> selectedPersonalities = [];
 
-  Future<void> savePreferences() async {
+  final List<String> personalities = [
+    'Friendly', 'Playful', 'Shy', 'Aggressive', 'Protective',
+    'Curious', 'Exciteable', 'Calm', 'Anxious', 'Clever',
+    'Goofy', 'Laidback', 'Social', 'Active', 'Sensitive', 'Stuborn'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserPreferences();
+  }
+
+  Future<void> _loadUserPreferences() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final userQuery = await FirebaseFirestore.instance
+        .collection('users')
+        .where('uid', isEqualTo: uid)
+        .limit(1)
+        .get();
+
+    if (userQuery.docs.isEmpty) return;
+
+    final userData = userQuery.docs.first.data();
+    final prefs = userData['preferences'] ?? {};
+
+    setState(() {
+      selectedEnergyLevel = prefs['energyLevel'];
+      minAge = (prefs['minAge'] ?? 0).toDouble();
+      maxAge = (prefs['maxAge'] ?? 15).toDouble();
+      maxWeight = (prefs['maxWeight'] ?? 100).toDouble();
+      selectedPersonalities = List<String>.from(prefs['preferredPersonalities'] ?? []);
+    });
+  }
+
+  Future<void> _savePreferences() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -52,27 +66,41 @@ class _ChoosePreferencesState extends State<ChoosePreferences> {
       'minAge': minAge.round(),
       'maxAge': maxAge.round(),
       'maxWeight': maxWeight.round(),
-      'preferredPersonalities': selectedPersonalities,
+      'preferredPersonalities': selectedPersonalities.toList(),
     };
+
+    final userQuery = await FirebaseFirestore.instance
+        .collection('users')
+        .where('uid', isEqualTo: uid)
+        .limit(1)
+        .get();
+
+    if (userQuery.docs.isEmpty) return;
+
+    final userDocId = userQuery.docs.first.id;
 
     await FirebaseFirestore.instance
         .collection('users')
-        .doc(widget.userDocId)
-        .update({
-      'preferences': preferences,
-    });
-await sendEmbeddingRequest();;
-    // Navigate to next page or show confirmation
+        .doc(userDocId)
+        .update({'preferences': preferences});
+
+    await sendEmbeddingRequest();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Preferences updated!')),
+    );
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const NavigationExample()),
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('What Would You Prefer In a Playdate?')),
+      appBar: AppBar(title: const Text('Change Playdate Preferences')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
@@ -129,9 +157,11 @@ await sendEmbeddingRequest();;
                     onSelected: (bool selected) {
                       setState(() {
                         if (selected) {
-                          selectedPersonalities.add(trait);
+                          if (!selectedPersonalities.contains(trait)) {
+                            selectedPersonalities.add(trait);
+                          }
                         } else {
-                          selectedPersonalities.remove(trait);
+                          selectedPersonalities = selectedPersonalities.where((t) => t != trait).toList();
                         }
                       });
                     },
@@ -141,7 +171,7 @@ await sendEmbeddingRequest();;
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton(
-                  onPressed: savePreferences,
+                  onPressed: _savePreferences,
                   child: const Text('Save Preferences'),
                 ),
               )

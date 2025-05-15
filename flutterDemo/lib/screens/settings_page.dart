@@ -2,57 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:playpaws_test/screens/login_screen.dart';
 import 'profile_ui.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../screens/change_preferences.dart';
 
-
-class SettingsPage extends StatelessWidget
-{
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
-  @override 
-  Widget build(BuildContext context)
-  {
-    return Scaffold
-    (
-      body: Stack 
-      (
-        children: 
-        [
-          ListView
-          (
-            children:
-            [
-              ListTile
-              (
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          ListView(
+            children: [
+              ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text("Profile"),
                 subtitle: const Text("Manage your account"),
-                  onTap: () 
-                  {
-                    Navigator.push
-                    (
-                      context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                    );
-                  },
-                ),
-                const Divider(),
-                ListTile
-                (
-                  leading: const Icon(Icons.info),
-                  title: const Text("Account Info"),
-                  subtitle: const Text("Check your account information."),
-                  onTap:() {},
-                ),
-
-                const Divider(),
-                ListTile
-                (
-                  leading: const Icon(Icons.pets),
-                  title: const Text("Change User Preferences"),
-                  subtitle: const Text("Update your preferences for which dogs you want to see."),
-                  onTap:() {},
-                ),
-                /*
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ProfileScreen()),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.info),
+                title: const Text("Account Info"),
+                subtitle: const Text("Check your account information."),
+                onTap: () {},
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.pets),
+                title: const Text("Change User Preferences"),
+                subtitle: const Text(
+                    "Update your preferences for which dogs you want to see."),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ChangePreferences()),
+                  );
+                },
+              ),
+              /*
               
               const Divider(),
               
@@ -76,23 +71,16 @@ class SettingsPage extends StatelessWidget
               */
             ],
           ),
-          Align
-          (
+          Align(
             alignment: Alignment.bottomRight,
-            child: Padding
-            (
+            child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton
-              (
-                onPressed: () async
-                {
+              child: ElevatedButton(
+                onPressed: () async {
                   await FirebaseAuth.instance.signOut();
-                  if (context.mounted)
-                  {
-                    Navigator.of(context).pushReplacement
-                    (
-                      MaterialPageRoute(builder: (context) => LoginScreen())
-                    );
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (context) => LoginScreen()));
                   }
                 },
                 child: Text("Logout"),
