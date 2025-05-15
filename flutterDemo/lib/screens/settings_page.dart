@@ -26,13 +26,13 @@ class SettingsPage extends StatelessWidget {
                   );
                 },
               ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.info),
-                title: const Text("Account Info"),
-                subtitle: const Text("Check your account information."),
-                onTap: () {},
-              ),
+              // const Divider(),
+              // ListTile(
+              //   leading: const Icon(Icons.info),
+              //   title: const Text("Account Info"),
+              //   subtitle: const Text("Check your account information."),
+              // //   onTap: () {},
+              // ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.pets),
