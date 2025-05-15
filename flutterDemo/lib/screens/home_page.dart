@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'CardSwipe.dart'; // cardswipe has getDogs() and swiping UI+logic
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart'; // <-- also import this for the theme
-
+import 'SwipeCard.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
