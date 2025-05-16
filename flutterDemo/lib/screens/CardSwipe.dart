@@ -372,6 +372,9 @@ Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
 
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final matchData = db.collection('matches');
+  var user1Uid=null;
+  var user2Uid=null;
+
   DocumentReference dogRef = dogDoc.reference;
     DocumentReference? currentDogRef = await getDogID();
   if (currentDogRef == null) {
@@ -400,29 +403,55 @@ Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
     {
       await matchData.doc(doc.id).update({"status": "Accepted"});  //if does exist change pending to accepted
 
-      var dog1Snapshot = await currentDogRef.get();
-      var dog2Snapshot = await dogRef.get();
-      String user1 = dog1Snapshot.get('owner');
-      String user2 = dog2Snapshot.get('owner');
-      List<String> ids = [user1, user2];
+      // var dog1Snapshot = await currentDogRef.get();
+      // var dog2Snapshot = await dogRef.get();
+        QuerySnapshot user1Snapshot = await db.collection("users")
+      .where("dog", isEqualTo: currentDogRef)
+      .limit(1) // Ensure only one document is returned
+      .get();
+
+          QuerySnapshot user2Snapshot = await db.collection("users")
+      .where("dog", isEqualTo: dogRef)
+      .limit(1) // Ensure only one document is returned
+      .get();
+
+        if (user1Snapshot.docs.isNotEmpty) {
+    DocumentSnapshot userDoc = user1Snapshot.docs.first;
+    Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+    user1Uid=userData['uid'];
+        }
+
+                if (user2Snapshot.docs.isNotEmpty) {
+    DocumentSnapshot userDoc = user2Snapshot.docs.first;
+    Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+    user2Uid=userData['uid'];
+        }
+      // String user1 = dog1Snapshot.get('owner');
+      // String user2 = dog2Snapshot.get('owner');
+      if(user1Uid!=null && user2Uid!=null)
+      {
+      List<String> ids = [user1Uid, user2Uid];
       ids.sort();
       String chatID = ids.join("-");
       DocumentReference chatDoc = FirebaseFirestore.instance.collection('chats').doc(chatID);
       DocumentSnapshot chatSnapshot = await chatDoc.get();
+    final user1Ref = FirebaseFirestore.instance.doc("users/$user1Uid");
+    final user2Ref = FirebaseFirestore.instance.doc("users/$user2Uid");
 
       if (!chatSnapshot.exists) 
       {
         await chatDoc.set({
-        "users": ids,
-        "dog1": currentDogRef,
-        "dog2": dogRef,
-        "createdOn": FieldValue.serverTimestamp(),
+        "createdAt": FieldValue.serverTimestamp(),
+        "lastMessage": null,
+        "participants": [user1Ref,user2Ref],
         });
       }
+      }
 
-       final userData = FirebaseFirestore.instance.collection("users");
-       await userData.doc(user1).update({"matchedUsers": FieldValue.arrayUnion([user2])});
-       await userData.doc(user2).update({"matchedUsers": FieldValue.arrayUnion([user1])});
+
+      //  final userData = FirebaseFirestore.instance.collection("users");
+      //  await userData.doc(user1).update({"matchedUsers": FieldValue.arrayUnion([user2])});
+      //  await userData.doc(user2).update({"matchedUsers": FieldValue.arrayUnion([user1])});
     }
   }
 }

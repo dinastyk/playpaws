@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide CarouselController;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:playpaws_test/screens/login_screen.dart';
+import '../services/send_data_service.dart';
 import 'settings_page.dart';
 import 'login_screen.dart';
 import 'package:dropdown_search/dropdown_search.dart';
@@ -701,7 +702,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'energyLevel': selectedEnergyLevel,
       'personality': selectedPersonalities,
     });
-
+await sendDogEmbeddingRequest();
     Navigator.pop(context);
   }
 

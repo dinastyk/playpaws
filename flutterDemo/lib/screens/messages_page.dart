@@ -223,6 +223,8 @@ void _openPlaydateDialog() {
     });
 
     _messageController.clear();
+    await deleteEmptyChatsWithSameParticipants(user!.uid, receiverID);
+
   }
   
   /*
@@ -385,3 +387,25 @@ void _openPlaydateDialog() {
 }
 
 
+Future<void> deleteEmptyChatsWithSameParticipants(String uid1, String uid2) async {
+  final firestore = FirebaseFirestore.instance;
+  final user1Ref = firestore.doc('users/$uid1');
+  final user2Ref = firestore.doc('users/$uid2');
+
+  final querySnapshot = await firestore
+      .collection('chats')
+      .where('participants', arrayContains: user1Ref)
+      .get();
+
+  for (final doc in querySnapshot.docs) {
+    final data = doc.data();
+    final participants = List<DocumentReference>.from(data['participants']);
+
+    final hasBoth = participants.contains(user1Ref) && participants.contains(user2Ref);
+    final lastMessage = data['lastMessage'];
+
+    if (hasBoth && (lastMessage == null || lastMessage.toString().trim().isEmpty)) {
+      await doc.reference.delete();
+    }
+  }
+}
