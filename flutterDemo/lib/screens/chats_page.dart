@@ -70,7 +70,7 @@ class ChatsPage extends StatelessWidget {
               return FutureBuilder<String?>(
                 future: getUserName(receiverId),
                 builder: (context, nameSnapshot) {
-                  final displayName = nameSnapshot.data ?? receiverId;
+                  final displayName = nameSnapshot.data ?? "...";
 
                   return Column(
                     children: [
