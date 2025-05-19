@@ -27,7 +27,7 @@ class _SwipeCardState extends State<SwipeCard> {
 
     bool isLiked = direction == DismissDirection.startToEnd;
     if (isLiked) {
-      await matchDog(dogDoc);
+      await matchDog(context, dogDoc);
     } else {
       await rejectDog(dogDoc);
     }

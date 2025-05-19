@@ -233,7 +233,7 @@ class CardSwipe extends StatefulWidget {
 
     bool isLiked = direction == CardSwiperDirection.right;
     if (isLiked) {
-      await matchDog(dogDoc);
+      await matchDog(context, dogDoc);
     } else {
       await rejectDog(dogDoc);
     }
@@ -366,95 +366,238 @@ Widget build(BuildContext context) {
   );
 }
 }
-
-
-Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
-
+Future<void> matchDog(BuildContext context, QueryDocumentSnapshot dogDoc) async {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final matchData = db.collection('matches');
-  var user1Uid=null;
-  var user2Uid=null;
+  var user1Uid;
+  var user2Uid;
 
   DocumentReference dogRef = dogDoc.reference;
-    DocumentReference? currentDogRef = await getDogID();
-  if (currentDogRef == null) {
-    return; // return empty list if user has no dog
-  }
-  // DocumentReference currentDogRef = db.collection('dogs').doc(dog_id);
-  print('Matched:${dogRef}, ${currentDogRef}'); //debug print dog and current dog
-  QuerySnapshot matchSnapshot = await matchData //get match data where dog 2 is current dog and pending
+  DocumentReference? currentDogRef = await getDogID();
+
+  if (currentDogRef == null) return;
+
+  print('Matched: $dogRef, $currentDogRef');
+
+  QuerySnapshot matchSnapshot = await matchData
       .where("dog1", isEqualTo: dogRef)
       .where("dog2", isEqualTo: currentDogRef)
       .where("status", isEqualTo: "Pending")
       .get();
 
-  if (matchSnapshot.docs.isEmpty) 
-  { //if is empty, this didnt't exist create new match doc with dog1 is current dog, dog2 is matched dog
+  if (matchSnapshot.docs.isEmpty) {
     await matchData.add({
       "createdOn": FieldValue.serverTimestamp(),
       "dog1": currentDogRef,
       "dog2": dogRef,
       "status": "Pending",
     });
-  } 
-  else 
-  {
-    for (var doc in matchSnapshot.docs) 
-    {
-      await matchData.doc(doc.id).update({"status": "Accepted"});  //if does exist change pending to accepted
+  } else {
+    for (var doc in matchSnapshot.docs) {
+      await matchData.doc(doc.id).update({"status": "Accepted"});
 
-      // var dog1Snapshot = await currentDogRef.get();
-      // var dog2Snapshot = await dogRef.get();
-        QuerySnapshot user1Snapshot = await db.collection("users")
-      .where("dog", isEqualTo: currentDogRef)
-      .limit(1) // Ensure only one document is returned
-      .get();
+      QuerySnapshot user1Snapshot = await db
+          .collection("users")
+          .where("dog", isEqualTo: currentDogRef)
+          .limit(1)
+          .get();
 
-          QuerySnapshot user2Snapshot = await db.collection("users")
-      .where("dog", isEqualTo: dogRef)
-      .limit(1) // Ensure only one document is returned
-      .get();
+      QuerySnapshot user2Snapshot = await db
+          .collection("users")
+          .where("dog", isEqualTo: dogRef)
+          .limit(1)
+          .get();
 
-        if (user1Snapshot.docs.isNotEmpty) {
-    DocumentSnapshot userDoc = user1Snapshot.docs.first;
-    Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-    user1Uid=userData['uid'];
-        }
-
-                if (user2Snapshot.docs.isNotEmpty) {
-    DocumentSnapshot userDoc = user2Snapshot.docs.first;
-    Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-    user2Uid=userData['uid'];
-        }
-      // String user1 = dog1Snapshot.get('owner');
-      // String user2 = dog2Snapshot.get('owner');
-      if(user1Uid!=null && user2Uid!=null)
-      {
-      List<String> ids = [user1Uid, user2Uid];
-      ids.sort();
-      String chatID = ids.join("-");
-      DocumentReference chatDoc = FirebaseFirestore.instance.collection('chats').doc(chatID);
-      DocumentSnapshot chatSnapshot = await chatDoc.get();
-    final user1Ref = FirebaseFirestore.instance.doc("users/$user1Uid");
-    final user2Ref = FirebaseFirestore.instance.doc("users/$user2Uid");
-
-      if (!chatSnapshot.exists) 
-      {
-        await chatDoc.set({
-        "createdAt": FieldValue.serverTimestamp(),
-        "lastMessage": null,
-        "participants": [user1Ref,user2Ref],
-        });
-      }
+      if (user1Snapshot.docs.isNotEmpty) {
+        user1Uid = user1Snapshot.docs.first['uid'];
       }
 
+      if (user2Snapshot.docs.isNotEmpty) {
+        user2Uid = user2Snapshot.docs.first['uid'];
+      }
 
-      //  final userData = FirebaseFirestore.instance.collection("users");
-      //  await userData.doc(user1).update({"matchedUsers": FieldValue.arrayUnion([user2])});
-      //  await userData.doc(user2).update({"matchedUsers": FieldValue.arrayUnion([user1])});
+      if (user1Uid != null && user2Uid != null) {
+        List<String> ids = [user1Uid, user2Uid];
+        ids.sort();
+        String chatID = ids.join("-");
+        DocumentReference chatDoc = db.collection('chats').doc(chatID);
+        DocumentSnapshot chatSnapshot = await chatDoc.get();
+
+        final user1Ref = db.doc("users/$user1Uid");
+        final user2Ref = db.doc("users/$user2Uid");
+
+        if (!chatSnapshot.exists) {
+          await chatDoc.set({
+            "createdAt": FieldValue.serverTimestamp(),
+            "lastMessage": null,
+            "participants": [user1Ref, user2Ref],
+          });
+        }
+      }
+
+final dogData = dogDoc.data() as Map<String, dynamic>;
+final dogName = dogData['name'] ?? 'this dog';
+final dogBreed = dogData['breed'] ?? 'Unknown breed';
+final dogImageUrl = dogData["dogPictureURL"] ??
+    "https://www.ohio.edu/sites/default/files/styles/max_650x650/public/2025-03/Image.jpeg?itok=hc0EF56Z";
+
+showModalBottomSheet<void>(
+  context: context,
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+  ),
+  backgroundColor: const Color(0xFFD1E4FF),
+  isScrollControlled: true,
+  builder: (BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            '🎉 It\'s a Match!',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1565C0), 
+            ),
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.network(
+              dogImageUrl,
+              width: MediaQuery.of(context).size.width * 0.7,
+              height: MediaQuery.of(context).size.width * 0.7,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            dogName,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFEF6C00),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            dogBreed,
+            style: const TextStyle(fontSize: 16, color: Colors.black54),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFFFF9874),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Start Chatting'),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  },
+);
+
     }
   }
 }
+
+
+// Future<void> matchDog(QueryDocumentSnapshot dogDoc) async {
+
+//   final FirebaseFirestore db = FirebaseFirestore.instance;
+//   final matchData = db.collection('matches');
+//   var user1Uid=null;
+//   var user2Uid=null;
+
+//   DocumentReference dogRef = dogDoc.reference;
+//     DocumentReference? currentDogRef = await getDogID();
+//   if (currentDogRef == null) {
+//     return; // return empty list if user has no dog
+//   }
+//   // DocumentReference currentDogRef = db.collection('dogs').doc(dog_id);
+//   print('Matched:${dogRef}, ${currentDogRef}'); //debug print dog and current dog
+//   QuerySnapshot matchSnapshot = await matchData //get match data where dog 2 is current dog and pending
+//       .where("dog1", isEqualTo: dogRef)
+//       .where("dog2", isEqualTo: currentDogRef)
+//       .where("status", isEqualTo: "Pending")
+//       .get();
+
+//   if (matchSnapshot.docs.isEmpty) 
+//   { //if is empty, this didnt't exist create new match doc with dog1 is current dog, dog2 is matched dog
+//     await matchData.add({
+//       "createdOn": FieldValue.serverTimestamp(),
+//       "dog1": currentDogRef,
+//       "dog2": dogRef,
+//       "status": "Pending",
+//     });
+//   } 
+//   else 
+//   {
+//     for (var doc in matchSnapshot.docs) 
+//     {
+//       await matchData.doc(doc.id).update({"status": "Accepted"});  //if does exist change pending to accepted
+
+//       // var dog1Snapshot = await currentDogRef.get();
+//       // var dog2Snapshot = await dogRef.get();
+//         QuerySnapshot user1Snapshot = await db.collection("users")
+//       .where("dog", isEqualTo: currentDogRef)
+//       .limit(1) // Ensure only one document is returned
+//       .get();
+
+//           QuerySnapshot user2Snapshot = await db.collection("users")
+//       .where("dog", isEqualTo: dogRef)
+//       .limit(1) // Ensure only one document is returned
+//       .get();
+
+//         if (user1Snapshot.docs.isNotEmpty) {
+//     DocumentSnapshot userDoc = user1Snapshot.docs.first;
+//     Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+//     user1Uid=userData['uid'];
+//         }
+
+//                 if (user2Snapshot.docs.isNotEmpty) {
+//     DocumentSnapshot userDoc = user2Snapshot.docs.first;
+//     Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+//     user2Uid=userData['uid'];
+//         }
+//       // String user1 = dog1Snapshot.get('owner');
+//       // String user2 = dog2Snapshot.get('owner');
+//       if(user1Uid!=null && user2Uid!=null)
+//       {
+//       List<String> ids = [user1Uid, user2Uid];
+//       ids.sort();
+//       String chatID = ids.join("-");
+//       DocumentReference chatDoc = FirebaseFirestore.instance.collection('chats').doc(chatID);
+//       DocumentSnapshot chatSnapshot = await chatDoc.get();
+//     final user1Ref = FirebaseFirestore.instance.doc("users/$user1Uid");
+//     final user2Ref = FirebaseFirestore.instance.doc("users/$user2Uid");
+
+//       if (!chatSnapshot.exists) 
+//       {
+//         await chatDoc.set({
+//         "createdAt": FieldValue.serverTimestamp(),
+//         "lastMessage": null,
+//         "participants": [user1Ref,user2Ref],
+//         });
+//       }
+//       }
+
+
+//       //  final userData = FirebaseFirestore.instance.collection("users");
+//       //  await userData.doc(user1).update({"matchedUsers": FieldValue.arrayUnion([user2])});
+//       //  await userData.doc(user2).update({"matchedUsers": FieldValue.arrayUnion([user1])});
+//     }
+//   }
+// }
 
 
 Future<void> rejectDog(QueryDocumentSnapshot dogDoc) async {
