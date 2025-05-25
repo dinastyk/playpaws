@@ -139,9 +139,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Future<void> _loadPlaydates() async {
+  final User? user = FirebaseAuth.instance.currentUser;
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('playdate')
         .where('status', isNotEqualTo: 'cancelled')
+        .where(Filter.or(
+  Filter('creatorId', isEqualTo: user?.uid),
+  Filter('receiverId', isEqualTo: user?.uid),
+))
+
         .get();
 
     Map<DateTime, List<Map<String, dynamic>>> playdateMap = {};

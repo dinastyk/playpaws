@@ -59,7 +59,7 @@ appBar: AppBar(
 ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator()) // show loading indicator if no dogs are available
-            : CardSwipe(dogs: dogs), // pass the dogs data to CardSwipe
+            : SwipeCard(dogs: dogs), // pass the dogs data to CardSwipe or SwipeCard based on UI we choose
       ),
     );
   }
